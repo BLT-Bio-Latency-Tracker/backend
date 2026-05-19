@@ -1,2 +1,0 @@
--- BLT Phase 1 baseline migration.
--- Domain tables will be added in later phases.

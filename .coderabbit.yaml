@@ -1,0 +1,21 @@
+language: "ko-KR"
+
+reviews:
+  # 리뷰 성향 설정 (chill, balanced, strict 중 선택)
+  profile: "chill"
+  # 파일별 변경 사항(Walkthrough)을 접어두기
+  collapse_walkthrough: true
+  # PR 본문에 추가되는 시(Poem) 작성 기능 끄기
+  poem: false
+  # 라인별 상세 코드 리뷰 활성화
+  auto_review: true
+
+  # AI에게 내리는 커스텀 지시사항
+  instructions: |
+    - 불필요한 미사여구, 환영 인사, 장황한 파일별 코드 설명은 생략해.
+    - 프로젝트 환경(Kotlin 1.9, Spring Boot 3, PostgreSQL)을 인지하고 리뷰해.
+    - 핵심 비즈니스 로직, API 스펙 변경, DB 스키마(Flyway) 변경 등 큰 틀의 변화만 집중해서 요약해.
+
+chat:
+  # PR 코멘트 창에서 @coderabbitai 를 태그하여 질문하는 기능 유지
+  auto_reply: true
