@@ -57,7 +57,7 @@ class NotificationLog(
     val scheduledAt: Instant,
     @Column(name = "sent_at")
     var sentAt: Instant? = null,
-    @Column(name = "deliverd_at")
+    @Column(name = "delivered_at")
     var deliveredAt: Instant? = null,
     @Column(name = "opened_at")
     var openedAt: Instant? = null,

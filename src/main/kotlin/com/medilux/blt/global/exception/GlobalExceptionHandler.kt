@@ -51,7 +51,7 @@ class GlobalExceptionHandler {
     @ExceptionHandler(HttpMessageNotReadableException::class)
     fun handleHttpMessageNotReadableException(ex: HttpMessageNotReadableException): ResponseEntity<ProblemDetail> = buildProblemDetail(
         status = ErrorCode.INVALID_REQUEST.status,
-        detail = ex.message ?: ErrorCode.INVALID_REQUEST.message,
+        detail = ErrorCode.INVALID_REQUEST.message,
         errorCode = ErrorCode.INVALID_REQUEST.code,
     )
 
