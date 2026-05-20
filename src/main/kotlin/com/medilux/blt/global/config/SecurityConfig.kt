@@ -1,5 +1,6 @@
 package com.medilux.blt.global.config
 
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.http.HttpHeaders
@@ -14,7 +15,10 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource
 
 @Configuration
 @EnableWebSecurity
-class SecurityConfig {
+class SecurityConfig(
+    @Value("\${blt.cors.allowed-origin-patterns}")
+    private val allowedOriginPatternsProperty: String,
+) {
     @Bean
     fun securityFilterChain(http: HttpSecurity): SecurityFilterChain = http
         .csrf { it.disable() }
@@ -41,13 +45,10 @@ class SecurityConfig {
         val configuration =
             CorsConfiguration().apply {
                 allowedOriginPatterns =
-                    listOf(
-                        "*",
-                        "http://localhost:*",
-                        "https://localhost:*",
-                        "http://127.0.0.1:*",
-                        "https://127.0.0.1:*",
-                    )
+                    allowedOriginPatternsProperty
+                        .split(",")
+                        .map { originPattern -> originPattern.trim() }
+                        .filter { originPattern -> originPattern.isNotEmpty() }
                 allowedMethods =
                     listOf(
                         HttpMethod.GET.name(),

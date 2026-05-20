@@ -22,3 +22,7 @@ server:
 springdoc:
   swagger-ui:
     path: /swagger-ui.html
+
+blt:
+  cors:
+    allowed-origin-patterns: ${CORS_ALLOWED_ORIGIN_PATTERNS:http://localhost:*,https://localhost:*,http://127.0.0.1:*,https://127.0.0.1:*}
