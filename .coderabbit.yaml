@@ -1,3 +1,5 @@
+# yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
+
 language: "ko-KR"
 
 reviews:
@@ -8,7 +10,8 @@ reviews:
   # PR 본문에 추가되는 시(Poem) 작성 기능 끄기
   poem: false
   # 라인별 상세 코드 리뷰 활성화
-  auto_review: true
+  auto_review:
+    enabled: true
 
   # AI에게 내리는 커스텀 지시사항
   instructions: |
