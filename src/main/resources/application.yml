@@ -15,12 +15,6 @@ spring:
     properties:
       hibernate:
         format_sql: true
-        dialect: org.hibernate.dialect.PostgreSQLDialect
-
-  flyway:
-    enabled: true
-    locations: classpath:db/migration
-    baseline-on-migrate: true
 
 server:
   port: ${SERVER_PORT:8080}
@@ -28,3 +22,7 @@ server:
 springdoc:
   swagger-ui:
     path: /swagger-ui.html
+
+blt:
+  cors:
+    allowed-origin-patterns: ${CORS_ALLOWED_ORIGIN_PATTERNS:http://localhost:*,https://localhost:*,http://127.0.0.1:*,https://127.0.0.1:*}
