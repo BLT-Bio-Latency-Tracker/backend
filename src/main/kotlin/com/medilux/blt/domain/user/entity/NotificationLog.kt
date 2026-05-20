@@ -16,7 +16,7 @@ import jakarta.persistence.Table
 import org.hibernate.annotations.JdbcTypeCode
 import org.hibernate.annotations.SQLRestriction
 import org.hibernate.type.SqlTypes
-import java.time.LocalDateTime
+import java.time.Instant
 
 @Entity
 @Table(
@@ -44,8 +44,8 @@ class NotificationLog(
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "payload", nullable = false, columnDefinition = "jsonb")
     val payload: Map<String, Any?> = emptyMap(),
-    @Column(name = "fcm_message_id", nullable = false)
-    var fcmMessageId: String,
+    @Column(name = "fcm_message_id")
+    var fcmMessageId: String? = null,
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false)
     var status: NotificationStatus,
@@ -54,13 +54,13 @@ class NotificationLog(
     @Column(name = "error_message", columnDefinition = "text")
     var errorMessage: String? = null,
     @Column(name = "scheduled_at", nullable = false)
-    val scheduledAt: LocalDateTime,
-    @Column(name = "sent_at", nullable = false)
-    var sentAt: LocalDateTime,
-    @Column(name = "deliverd_at", nullable = false)
-    var deliveredAt: LocalDateTime,
-    @Column(name = "opened_at", nullable = false)
-    var openedAt: LocalDateTime,
+    val scheduledAt: Instant,
+    @Column(name = "sent_at")
+    var sentAt: Instant? = null,
+    @Column(name = "deliverd_at")
+    var deliveredAt: Instant? = null,
+    @Column(name = "opened_at")
+    var openedAt: Instant? = null,
 ) : BaseEntity() {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

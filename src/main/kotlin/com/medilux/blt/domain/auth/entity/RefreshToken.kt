@@ -14,7 +14,7 @@ import jakarta.persistence.ManyToOne
 import jakarta.persistence.Table
 import jakarta.persistence.UniqueConstraint
 import org.hibernate.annotations.SQLRestriction
-import java.time.LocalDateTime
+import java.time.Instant
 
 @Entity
 @Table(
@@ -34,9 +34,9 @@ class RefreshToken(
     @Column(name = "token_hash", nullable = false, length = 64, updatable = false)
     val tokenHash: String,
     @Column(name = "expires_at", nullable = false, updatable = false)
-    val expiresAt: LocalDateTime,
+    val expiresAt: Instant,
     @Column(name = "revoked_at")
-    var revokedAt: LocalDateTime? = null,
+    var revokedAt: Instant? = null,
 ) : BaseEntity() {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

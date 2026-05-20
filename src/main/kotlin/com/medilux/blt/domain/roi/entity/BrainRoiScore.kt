@@ -19,7 +19,7 @@ import jakarta.persistence.Table
 import org.hibernate.annotations.JdbcTypeCode
 import org.hibernate.annotations.SQLRestriction
 import org.hibernate.type.SqlTypes
-import java.time.LocalDateTime
+import java.time.Instant
 
 @Entity
 @Table(
@@ -59,7 +59,7 @@ class BrainRoiScore(
     @Column(name = "breakdown", nullable = false, columnDefinition = "jsonb")
     val breakdown: Map<String, Any?> = emptyMap(),
     @Column(name = "measured_at", nullable = false, updatable = false)
-    val measuredAt: LocalDateTime,
+    val measuredAt: Instant,
 ) : BaseEntity() {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

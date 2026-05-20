@@ -16,7 +16,7 @@ import jakarta.persistence.UniqueConstraint
 import org.hibernate.annotations.JdbcTypeCode
 import org.hibernate.annotations.SQLRestriction
 import org.hibernate.type.SqlTypes
-import java.time.LocalDateTime
+import java.time.Instant
 import java.util.UUID
 
 @Entity
@@ -37,9 +37,9 @@ class PvtSession(
     @Column(name = "measurement_id", nullable = false, updatable = false)
     val measurementId: UUID,
     @Column(name = "started_at", nullable = false, updatable = false)
-    val startedAt: LocalDateTime,
+    val startedAt: Instant,
     @Column(name = "ended_at", nullable = false, updatable = false)
-    val endedAt: LocalDateTime,
+    val endedAt: Instant,
     @Column(name = "total_duration_ms", nullable = false)
     val totalDurationMs: Int,
     @Column(name = "total_count", nullable = false)

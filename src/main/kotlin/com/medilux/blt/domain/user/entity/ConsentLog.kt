@@ -14,7 +14,7 @@ import jakarta.persistence.JoinColumn
 import jakarta.persistence.ManyToOne
 import jakarta.persistence.Table
 import org.hibernate.annotations.SQLRestriction
-import java.time.LocalDateTime
+import java.time.Instant
 
 @Entity
 @Table(
@@ -36,7 +36,7 @@ class ConsentLog(
     @Column(name = "agreed", nullable = false, updatable = false)
     val agreed: Boolean,
     @Column(name = "agreed_at", nullable = false, updatable = false)
-    val agreedAt: LocalDateTime,
+    val agreedAt: Instant,
     @Column(name = "client_ip", columnDefinition = "inet", updatable = false)
     val clientIp: String? = null,
 ) : BaseEntity() {

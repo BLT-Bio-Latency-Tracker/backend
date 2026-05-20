@@ -14,7 +14,7 @@ import jakarta.persistence.JoinColumn
 import jakarta.persistence.ManyToOne
 import jakarta.persistence.Table
 import org.hibernate.annotations.SQLRestriction
-import java.time.LocalDateTime
+import java.time.Instant
 
 @Entity
 @Table(
@@ -35,9 +35,9 @@ class UserDevice(
     @Column(name = "platform", nullable = false, length = 10)
     val platform: DevicePlatform,
     @Column(name = "last_active_at", nullable = false)
-    var lastActiveAt: LocalDateTime,
+    var lastActiveAt: Instant,
     @Column(name = "revoked_at")
-    var revokedAt: LocalDateTime? = null,
+    var revokedAt: Instant? = null,
 ) : BaseEntity() {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
