@@ -1,23 +1,49 @@
 package com.medilux.blt
 
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
-import org.springframework.boot.test.context.SpringBootTest
-import org.springframework.data.jpa.mapping.JpaMetamodelMappingContext
-import org.springframework.test.context.bean.override.mockito.MockitoBean
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase
+import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest
+import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager
+import org.springframework.boot.testcontainers.service.connection.ServiceConnection
+import org.testcontainers.containers.PostgreSQLContainer
+import org.testcontainers.junit.jupiter.Container
+import org.testcontainers.junit.jupiter.Testcontainers
 
-@SpringBootTest(
+@Testcontainers
+@DataJpaTest(
     properties = [
-        "spring.autoconfigure.exclude=" +
-            "org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration," +
-            "org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration," +
-            "org.springframework.boot.autoconfigure.flyway.FlywayAutoConfiguration",
+        "spring.jpa.hibernate.ddl-auto=create",
     ],
 )
+@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 class BltApplicationTests {
-    @MockitoBean(name = "jpaMappingContext")
-    lateinit var jpaMetamodelMappingContext: JpaMetamodelMappingContext
+    @Autowired
+    lateinit var entityManager: TestEntityManager
 
     @Test
-    fun contextLoads() {
+    fun jpaEntityMappingsLoad() {
+        val entityNames = entityManager.entityManager.metamodel.entities.map { it.name }
+
+        assertThat(entityNames)
+            .contains(
+                "User",
+                "ConsentLog",
+                "UserDevice",
+                "NotificationLog",
+                "RefreshToken",
+                "SleepRecord",
+                "PvtSession",
+                "BrainRoiScore",
+                "Recommendation",
+            )
+    }
+
+    companion object {
+        @Container
+        @ServiceConnection
+        @JvmStatic
+        val postgres = PostgreSQLContainer("postgres:16")
     }
 }
