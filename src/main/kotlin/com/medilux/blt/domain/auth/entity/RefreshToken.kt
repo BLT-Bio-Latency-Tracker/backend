@@ -31,17 +31,13 @@ class RefreshToken(
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false, updatable = false)
     val user: User,
-
     @Column(name = "token_hash", nullable = false, length = 64, updatable = false)
     val tokenHash: String,
-
     @Column(name = "expires_at", nullable = false, updatable = false)
     val expiresAt: LocalDateTime,
-
     @Column(name = "revoked_at")
     var revokedAt: LocalDateTime? = null,
 ) : BaseEntity() {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Long = 0L

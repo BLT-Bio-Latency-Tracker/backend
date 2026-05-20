@@ -29,21 +29,16 @@ class UserDevice(
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false, updatable = false)
     val user: User,
-
     @Column(name = "fcm_token", nullable = false, length = 255)
     var fcmToken: String,
-
     @Enumerated(EnumType.STRING)
     @Column(name = "platform", nullable = false, length = 10)
     val platform: DevicePlatform,
-
     @Column(name = "last_active_at", nullable = false)
     var lastActiveAt: LocalDateTime,
-
     @Column(name = "revoked_at")
     var revokedAt: LocalDateTime? = null,
 ) : BaseEntity() {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Long = 0L

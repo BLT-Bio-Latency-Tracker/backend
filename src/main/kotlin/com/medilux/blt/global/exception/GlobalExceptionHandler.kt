@@ -15,7 +15,6 @@ import org.springframework.web.servlet.resource.NoResourceFoundException
 
 @RestControllerAdvice
 class GlobalExceptionHandler {
-
     @ExceptionHandler(BltException::class)
     fun handleBltException(ex: BltException): ResponseEntity<ProblemDetail> =
         buildProblemDetail(
@@ -25,17 +24,17 @@ class GlobalExceptionHandler {
         )
 
     @ExceptionHandler(MethodArgumentNotValidException::class)
-    fun handleMethodArgumentNotValidException(
-        ex: MethodArgumentNotValidException,
-    ): ResponseEntity<ProblemDetail> {
-        val fieldErrors = ex.bindingResult
-            .fieldErrors
-            .map { fieldError -> fieldError.toErrorResponse() }
+    fun handleMethodArgumentNotValidException(ex: MethodArgumentNotValidException): ResponseEntity<ProblemDetail> {
+        val fieldErrors =
+            ex.bindingResult
+                .fieldErrors
+                .map { fieldError -> fieldError.toErrorResponse() }
 
-        val problemDetail = ProblemDetail.forStatusAndDetail(
-            ErrorCode.INVALID_REQUEST.status,
-            ErrorCode.INVALID_REQUEST.message,
-        )
+        val problemDetail =
+            ProblemDetail.forStatusAndDetail(
+                ErrorCode.INVALID_REQUEST.status,
+                ErrorCode.INVALID_REQUEST.message,
+            )
         problemDetail.title = ErrorCode.INVALID_REQUEST.status.reasonPhrase
         problemDetail.setProperty("errorCode", ErrorCode.INVALID_REQUEST.code)
         problemDetail.setProperty("fieldErrors", fieldErrors)

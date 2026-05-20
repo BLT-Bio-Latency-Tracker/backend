@@ -10,25 +10,23 @@ import org.springframework.context.annotation.Configuration
 
 @Configuration
 class SwaggerConfig {
-
     @Bean
     fun openAPI(): OpenAPI {
         val securitySchemeName = "bearerAuth"
-        val securityScheme = SecurityScheme()
-            .type(SecurityScheme.Type.HTTP)
-            .scheme("bearer")
-            .bearerFormat("JWT")
+        val securityScheme =
+            SecurityScheme()
+                .type(SecurityScheme.Type.HTTP)
+                .scheme("bearer")
+                .bearerFormat("JWT")
 
         return OpenAPI()
             .info(
                 Info()
                     .title("BLT (Bio-Latency Tracker) API")
                     .version("1.0.0"),
-            )
-            .components(
+            ).components(
                 Components()
                     .addSecuritySchemes(securitySchemeName, securityScheme),
-            )
-            .addSecurityItem(SecurityRequirement().addList(securitySchemeName))
+            ).addSecurityItem(SecurityRequirement().addList(securitySchemeName))
     }
 }

@@ -34,52 +34,37 @@ class PvtSession(
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false, updatable = false)
     val user: User,
-
     @Column(name = "measurement_id", nullable = false, updatable = false)
     val measurementId: UUID,
-
     @Column(name = "started_at", nullable = false, updatable = false)
     val startedAt: LocalDateTime,
-
     @Column(name = "ended_at", nullable = false, updatable = false)
     val endedAt: LocalDateTime,
-
     @Column(name = "total_duration_ms", nullable = false)
     val totalDurationMs: Int,
-
     @Column(name = "total_count", nullable = false)
     val totalCount: Int,
-
     @JdbcTypeCode(SqlTypes.ARRAY)
     @Column(name = "raw_rt_ms", nullable = false, columnDefinition = "integer[]")
     val rawRtMs: List<Int>,
-
     @Column(name = "avg_rt_ms", nullable = false)
     val avgRtMs: Double,
-
     @Column(name = "median_rt_ms")
     val medianRtMs: Double? = null,
-
     @Column(name = "lapses_mild", nullable = false)
     val lapsesMild: Int,
-
     @Column(name = "lapses_timeout", nullable = false)
     val lapsesTimeout: Int,
-
     @Column(name = "false_starts", nullable = false)
     val falseStarts: Int,
-
     @Column(name = "is_valid", nullable = false)
     val isValid: Boolean,
-
     @Column(name = "invalid_reason", length = 50)
     val invalidReason: String? = null,
-
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "trials", nullable = false, columnDefinition = "jsonb")
     val trials: List<Map<String, Any?>> = emptyList(),
 ) : BaseEntity() {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Long = 0L

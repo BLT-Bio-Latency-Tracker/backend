@@ -27,21 +27,16 @@ class Recommendation(
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "roi_score_id", nullable = false, updatable = false)
     val roiScore: BrainRoiScore,
-
     @Column(name = "quadrant_key", nullable = false)
     val quadrantKey: String,
-
     @Column(name = "title", nullable = false, length = 100)
     var title: String,
-
     @Column(name = "message", nullable = false, columnDefinition = "text")
     var message: String,
-
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "suggested_tasks", nullable = false, columnDefinition = "jsonb")
     var suggestedTasks: List<Map<String, Any?>> = emptyList(),
 ) : BaseEntity() {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Long = 0L

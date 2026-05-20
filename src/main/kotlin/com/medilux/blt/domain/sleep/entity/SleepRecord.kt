@@ -35,49 +35,35 @@ class SleepRecord(
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false, updatable = false)
     val user: User,
-
     @Column(name = "sleep_date", nullable = false, updatable = false)
     val sleepDate: LocalDate,
-
     @Column(name = "total_minutes", nullable = false)
     val totalMinutes: Int,
-
     @Column(name = "deep_minutes")
     val deepMinutes: Int? = null,
-
     @Column(name = "rem_minutes")
     val remMinutes: Int? = null,
-
     @Column(name = "core_minutes")
     val coreMinutes: Int? = null,
-
     @Column(name = "awake_minutes")
     val awakeMinutes: Int? = null,
-
     @Column(name = "in_bed_minutes")
     val inBedMinutes: Int? = null,
-
     @Column(name = "unspecified_minutes")
     val unspecifiedMinutes: Int? = null,
-
     @Column(name = "sample_count")
     val sampleCount: Int? = null,
-
     @Column(name = "night_hrv_ms")
     val nightHrvMs: Double? = null,
-
     @Column(name = "weekly_hrv_baseline_ms")
     val weeklyHrvBaselineMs: Double? = null,
-
     @Enumerated(EnumType.STRING)
     @Column(name = "data_completeness", length = 20)
     val dataCompleteness: SleepDataCompleteness? = null,
-
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "raw_payload", columnDefinition = "jsonb")
     val rawPayload: Map<String, Any?>? = null,
 ) : BaseEntity() {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Long = 0L

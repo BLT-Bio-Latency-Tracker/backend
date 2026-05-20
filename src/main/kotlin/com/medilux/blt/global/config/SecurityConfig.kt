@@ -15,7 +15,6 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource
 @Configuration
 @EnableWebSecurity
 class SecurityConfig {
-
     @Bean
     fun securityFilterChain(http: HttpSecurity): SecurityFilterChain =
         http
@@ -26,8 +25,7 @@ class SecurityConfig {
             .logout { it.disable() }
             .sessionManagement { sessionManagement ->
                 sessionManagement.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-            }
-            .authorizeHttpRequests { authorize ->
+            }.authorizeHttpRequests { authorize ->
                 authorize
                     .requestMatchers(
                         "/api/v1/auth/**",
@@ -35,33 +33,36 @@ class SecurityConfig {
                         "/swagger-ui/**",
                         "/swagger-ui.html",
                     ).permitAll()
-                    .anyRequest().authenticated()
-            }
-            .build()
+                    .anyRequest()
+                    .authenticated()
+            }.build()
 
     @Bean
     fun corsConfigurationSource(): CorsConfigurationSource {
-        val configuration = CorsConfiguration().apply {
-            allowedOriginPatterns = listOf(
-                "*",
-                "http://localhost:*",
-                "https://localhost:*",
-                "http://127.0.0.1:*",
-                "https://127.0.0.1:*",
-            )
-            allowedMethods = listOf(
-                HttpMethod.GET.name(),
-                HttpMethod.POST.name(),
-                HttpMethod.PUT.name(),
-                HttpMethod.PATCH.name(),
-                HttpMethod.DELETE.name(),
-                HttpMethod.OPTIONS.name(),
-            )
-            allowedHeaders = listOf("*")
-            exposedHeaders = listOf(HttpHeaders.AUTHORIZATION)
-            allowCredentials = false
-            maxAge = 3600
-        }
+        val configuration =
+            CorsConfiguration().apply {
+                allowedOriginPatterns =
+                    listOf(
+                        "*",
+                        "http://localhost:*",
+                        "https://localhost:*",
+                        "http://127.0.0.1:*",
+                        "https://127.0.0.1:*",
+                    )
+                allowedMethods =
+                    listOf(
+                        HttpMethod.GET.name(),
+                        HttpMethod.POST.name(),
+                        HttpMethod.PUT.name(),
+                        HttpMethod.PATCH.name(),
+                        HttpMethod.DELETE.name(),
+                        HttpMethod.OPTIONS.name(),
+                    )
+                allowedHeaders = listOf("*")
+                exposedHeaders = listOf(HttpHeaders.AUTHORIZATION)
+                allowCredentials = false
+                maxAge = 3600
+            }
 
         return UrlBasedCorsConfigurationSource().apply {
             registerCorsConfiguration("/**", configuration)

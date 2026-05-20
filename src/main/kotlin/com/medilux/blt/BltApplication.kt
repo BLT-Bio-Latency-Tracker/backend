@@ -9,5 +9,5 @@ import org.springframework.data.jpa.repository.config.EnableJpaAuditing
 class BltApplication
 
 fun main(args: Array<String>) {
-	runApplication<BltApplication>(*args)
+    runApplication<BltApplication>(*args)
 }

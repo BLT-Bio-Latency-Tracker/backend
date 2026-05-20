@@ -35,43 +35,32 @@ class BrainRoiScore(
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false, updatable = false)
     val user: User,
-
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "session_id", nullable = false, updatable = false)
     val session: PvtSession,
-
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "sleep_id", nullable = false, updatable = false)
     val sleepRecord: SleepRecord,
-
     @Enumerated(EnumType.STRING)
     @Column(name = "calculation_scenario", nullable = false)
     val calculationScenario: CalculationScenario,
-
     @Column(name = "final_score", nullable = false)
     val finalScore: Int,
-
     @Column(name = "sleep_score", nullable = false)
     val sleepScore: Int,
-
     @Column(name = "pvt_score", nullable = false)
     val pvtScore: Int,
-
     @Enumerated(EnumType.STRING)
     @Column(name = "quadrant", nullable = false)
     val quadrant: RoiQuadrant,
-
     @Column(name = "formula_version", nullable = false)
     val formulaVersion: String,
-
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "breakdown", nullable = false, columnDefinition = "jsonb")
     val breakdown: Map<String, Any?> = emptyMap(),
-
     @Column(name = "measured_at", nullable = false, updatable = false)
     val measuredAt: LocalDateTime,
 ) : BaseEntity() {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Long = 0L
