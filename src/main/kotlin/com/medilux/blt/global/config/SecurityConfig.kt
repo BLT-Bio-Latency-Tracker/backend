@@ -16,26 +16,25 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource
 @EnableWebSecurity
 class SecurityConfig {
     @Bean
-    fun securityFilterChain(http: HttpSecurity): SecurityFilterChain =
-        http
-            .csrf { it.disable() }
-            .cors { }
-            .httpBasic { it.disable() }
-            .formLogin { it.disable() }
-            .logout { it.disable() }
-            .sessionManagement { sessionManagement ->
-                sessionManagement.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-            }.authorizeHttpRequests { authorize ->
-                authorize
-                    .requestMatchers(
-                        "/api/v1/auth/**",
-                        "/v3/api-docs/**",
-                        "/swagger-ui/**",
-                        "/swagger-ui.html",
-                    ).permitAll()
-                    .anyRequest()
-                    .authenticated()
-            }.build()
+    fun securityFilterChain(http: HttpSecurity): SecurityFilterChain = http
+        .csrf { it.disable() }
+        .cors { }
+        .httpBasic { it.disable() }
+        .formLogin { it.disable() }
+        .logout { it.disable() }
+        .sessionManagement { sessionManagement ->
+            sessionManagement.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+        }.authorizeHttpRequests { authorize ->
+            authorize
+                .requestMatchers(
+                    "/api/v1/auth/**",
+                    "/v3/api-docs/**",
+                    "/swagger-ui/**",
+                    "/swagger-ui.html",
+                ).permitAll()
+                .anyRequest()
+                .authenticated()
+        }.build()
 
     @Bean
     fun corsConfigurationSource(): CorsConfigurationSource {

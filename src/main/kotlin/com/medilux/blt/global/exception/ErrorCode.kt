@@ -2,11 +2,7 @@ package com.medilux.blt.global.exception
 
 import org.springframework.http.HttpStatus
 
-enum class ErrorCode(
-    val status: HttpStatus,
-    val code: String,
-    val message: String,
-) {
+enum class ErrorCode(val status: HttpStatus, val code: String, val message: String) {
     INVALID_REQUEST(HttpStatus.BAD_REQUEST, "INVALID_REQUEST", "Invalid request."),
     UNAUTHORIZED(HttpStatus.UNAUTHORIZED, "UNAUTHORIZED", "Authentication is required."),
     FORBIDDEN(HttpStatus.FORBIDDEN, "FORBIDDEN", "Access is denied."),
