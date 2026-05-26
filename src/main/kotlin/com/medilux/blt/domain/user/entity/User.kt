@@ -44,8 +44,6 @@ class User(
     @Enumerated(EnumType.STRING)
     @Column(name = "gender", length = 10)
     var gender: Gender? = null,
-    @Column(name = "avg_wake_time")
-    var avgWakeTime: LocalTime? = null,
     @Enumerated(EnumType.STRING)
     @Column(name = "occupation", length = 30)
     var occupation: Occupation? = null,
@@ -55,12 +53,10 @@ class User(
     /** User Notification Settings **/
     @Column(name = "apns_device_token", length = 64)
     var apnsDeviceToken: String? = null,
-    @Column(name = "sleep_reminder_enabled", nullable = false)
-    var sleepReminderEnabled: Boolean = true,
+    @Column(name = "notification_enabled", nullable = false)
+    var notificationEnabled: Boolean = true,
     @Column(name = "sleep_reminder_time", nullable = false)
     var sleepReminderTime: LocalTime = LocalTime.of(22, 30),
-    @Column(name = "pvt_reminder_enabled", nullable = false)
-    var pvtReminderEnabled: Boolean = true,
     @Column(name = "pvt_reminder_time", nullable = false)
     var pvtReminderTime: LocalTime = LocalTime.of(7, 30),
     @JdbcTypeCode(SqlTypes.JSON)
