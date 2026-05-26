@@ -11,6 +11,7 @@ import org.springframework.stereotype.Component
 import java.time.Duration
 import java.time.Instant
 import java.util.Date
+import java.util.UUID
 
 @Component
 class JwtTokenProvider(
@@ -51,6 +52,7 @@ class JwtTokenProvider(
         val token = JWT.create()
             .withIssuer(issuer)
             .withSubject("apple-signup")
+            .withJWTId(UUID.randomUUID().toString())
             .withClaim(TOKEN_TYPE_CLAIM, TokenType.VERIFICATION.name)
             .withClaim(APPLE_SUB_HASH_CLAIM, appleSubHash)
             .withIssuedAt(Date.from(now))
@@ -83,6 +85,7 @@ class JwtTokenProvider(
         val token = JWT.create()
             .withIssuer(issuer)
             .withSubject(subject)
+            .withJWTId(UUID.randomUUID().toString())
             .withClaim(TOKEN_TYPE_CLAIM, tokenType.name)
             .withIssuedAt(Date.from(now))
             .withExpiresAt(Date.from(expiresAt))

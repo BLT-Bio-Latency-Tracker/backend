@@ -14,15 +14,18 @@ import jakarta.persistence.Index
 import jakarta.persistence.JoinColumn
 import jakarta.persistence.ManyToOne
 import jakarta.persistence.Table
+import jakarta.persistence.UniqueConstraint
 import org.hibernate.annotations.SQLRestriction
 import java.time.Instant
 
 @Entity
 @Table(
     name = "refresh_tokens",
+    uniqueConstraints = [
+        UniqueConstraint(name = "uk_refresh_tokens_token_hash", columnNames = ["token_hash"]),
+    ],
     indexes = [
         Index(name = "idx_refresh_tokens_user_id", columnList = "user_id"),
-        Index(name = "idx_refresh_tokens_token_hash", columnList = "token_hash"),
         Index(name = "idx_refresh_tokens_expires_at", columnList = "expires_at"),
     ],
 )
