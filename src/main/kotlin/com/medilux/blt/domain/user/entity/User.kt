@@ -8,16 +8,19 @@ import jakarta.persistence.Enumerated
 import jakarta.persistence.GeneratedValue
 import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
+import jakarta.persistence.Index
 import jakarta.persistence.Table
-import jakarta.persistence.UniqueConstraint
+import org.hibernate.annotations.JdbcTypeCode
 import org.hibernate.annotations.SQLRestriction
+import org.hibernate.type.SqlTypes
 import java.time.LocalTime
 
 @Entity
 @Table(
     name = "users",
-    uniqueConstraints = [
-        UniqueConstraint(name = "uk_users_apple_sub_hash", columnNames = ["apple_sub_hash"]),
+    indexes = [
+        Index(name = "idx_users_apple_sub_hash", columnList = "apple_sub_hash"),
+        Index(name = "idx_users_status", columnList = "status"),
     ],
 )
 @SQLRestriction("deleted_at IS NULL")
@@ -34,6 +37,8 @@ class User(
     @Enumerated(EnumType.STRING)
     @Column(name = "auth_type", nullable = false, length = 20, updatable = false)
     val authType: AuthType,
+
+    /** User Profile **/
     @Column(name = "birth_year")
     var birthYear: Short? = null,
     @Enumerated(EnumType.STRING)
@@ -46,14 +51,21 @@ class User(
     var occupation: Occupation? = null,
     @Column(name = "onboarding_completed", nullable = false)
     var onboardingCompleted: Boolean = false,
+
+    /** User Notification Settings **/
     @Column(name = "apns_device_token", length = 64)
     var apnsDeviceToken: String? = null,
-    @Column(name = "notification_enabled", nullable = false)
-    var notificationEnabled: Boolean = true,
+    @Column(name = "sleep_reminder_enabled", nullable = false)
+    var sleepReminderEnabled: Boolean = true,
+    @Column(name = "sleep_reminder_time", nullable = false)
+    var sleepReminderTime: LocalTime = LocalTime.of(22, 30),
     @Column(name = "pvt_reminder_enabled", nullable = false)
     var pvtReminderEnabled: Boolean = true,
     @Column(name = "pvt_reminder_time", nullable = false)
-    var pvtReminderTime: LocalTime,
+    var pvtReminderTime: LocalTime = LocalTime.of(7, 30),
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "custom_notification_options", nullable = false, columnDefinition = "jsonb")
+    var customNotificationOptions: Map<String, Any> = emptyMap(),
     @Column(name = "notification_timezone", nullable = false, length = 40)
     var notificationTimezone: String = "Asia/Seoul",
 ) : BaseEntity() {

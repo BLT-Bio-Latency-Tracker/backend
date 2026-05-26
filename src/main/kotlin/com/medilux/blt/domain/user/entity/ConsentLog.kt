@@ -48,9 +48,9 @@ class ConsentLog(
     val id: Long = 0L
 }
 
-enum class ConsentType {
-    TERMS_OF_SERVICE,
-    PRIVACY_POLICY,
-    HEALTH_DATA,
-    MARKETING,
+enum class ConsentType(val required: Boolean) {
+    TERMS_OF_SERVICE(true),
+    PRIVACY_POLICY(true),
+    HEALTH_DATA(true),
+    MARKETING(false),
 }

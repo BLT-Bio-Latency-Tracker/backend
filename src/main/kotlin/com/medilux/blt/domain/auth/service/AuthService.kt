@@ -100,7 +100,11 @@ class AuthService(
             .map { consent -> consent.consentType }
             .toSet()
 
-        if (!agreedTypes.containsAll(REQUIRED_CONSENT_TYPES)) {
+        val requiredTypes = ConsentType.entries
+            .filter { consentType -> consentType.required }
+            .toSet()
+
+        if (!agreedTypes.containsAll(requiredTypes)) {
             throw BltException(ErrorCode.TERMS_REQUIRED_NOT_AGREED)
         }
     }
@@ -134,13 +138,5 @@ class AuthService(
             ?.takeIf { ip -> ip.isNotBlank() }
 
         return forwardedFor ?: remoteAddr
-    }
-
-    private companion object {
-        val REQUIRED_CONSENT_TYPES = setOf(
-            ConsentType.TERMS_OF_SERVICE,
-            ConsentType.PRIVACY_POLICY,
-            ConsentType.HEALTH_DATA,
-        )
     }
 }
