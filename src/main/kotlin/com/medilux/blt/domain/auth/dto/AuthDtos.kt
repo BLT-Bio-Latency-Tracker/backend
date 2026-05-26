@@ -23,6 +23,12 @@ data class AppleSignupRequest(
     val consents: List<ConsentRequest>,
 )
 
+@Schema(description = "토큰 갱신 요청")
+data class RefreshTokenRequest(
+    @field:Schema(description = "로그인 또는 가입 시 발급받은 refresh token", requiredMode = Schema.RequiredMode.REQUIRED)
+    val refreshToken: String,
+)
+
 @Schema(description = "약관 동의 요청 항목")
 data class ConsentRequest(
     @field:Schema(

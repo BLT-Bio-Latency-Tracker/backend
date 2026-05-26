@@ -4,6 +4,7 @@ import com.medilux.blt.domain.auth.dto.AppleAuthResponse
 import com.medilux.blt.domain.auth.dto.AppleSignupRequest
 import com.medilux.blt.domain.auth.dto.AppleVerifyRequest
 import com.medilux.blt.domain.auth.dto.AuthSessionResponse
+import com.medilux.blt.domain.auth.dto.RefreshTokenRequest
 import com.medilux.blt.domain.auth.entity.RefreshToken
 import com.medilux.blt.domain.auth.repository.RefreshTokenRepository
 import com.medilux.blt.domain.auth.security.AppleIdTokenVerifier
@@ -88,6 +89,31 @@ class AuthService(
         consentLogRepository.saveAll(consentLogs)
 
         return createSession(user)
+    }
+
+    @Transactional
+    fun refreshSession(request: RefreshTokenRequest): AuthSessionResponse {
+        if (request.refreshToken.isBlank()) {
+            throw BltException(ErrorCode.AUTH_INVALID_CREDENTIALS)
+        }
+
+        val userId = jwtTokenProvider.getUserIdFromRefreshToken(request.refreshToken)
+        val tokenHash = HashUtils.sha256Hex(request.refreshToken)
+        val savedRefreshToken = refreshTokenRepository.findByTokenHash(tokenHash)
+            ?: throw BltException(ErrorCode.AUTH_INVALID_CREDENTIALS)
+
+        val now = Instant.now()
+        if (
+            savedRefreshToken.revokedAt != null ||
+            !savedRefreshToken.expiresAt.isAfter(now) ||
+            savedRefreshToken.user.id != userId
+        ) {
+            throw BltException(ErrorCode.AUTH_INVALID_CREDENTIALS)
+        }
+
+        savedRefreshToken.revokedAt = now
+
+        return createSession(savedRefreshToken.user)
     }
 
     private fun validateConsents(request: AppleSignupRequest) {

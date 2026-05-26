@@ -69,6 +69,13 @@ class JwtTokenProvider(
         return subject.toLongOrNull() ?: throw BltException(ErrorCode.AUTH_INVALID_CREDENTIALS)
     }
 
+    fun getUserIdFromRefreshToken(token: String): Long {
+        val subject = verify(token, TokenType.REFRESH).subject
+            ?: throw BltException(ErrorCode.AUTH_INVALID_CREDENTIALS)
+
+        return subject.toLongOrNull() ?: throw BltException(ErrorCode.AUTH_INVALID_CREDENTIALS)
+    }
+
     fun getAppleSubHashFromVerificationToken(token: String): String {
         val claim = verify(token, TokenType.VERIFICATION).getClaim(APPLE_SUB_HASH_CLAIM)
         val appleSubHash = claim.asString()
