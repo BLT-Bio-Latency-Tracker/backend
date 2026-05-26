@@ -23,3 +23,12 @@ logging:
   level:
     org.hibernate.SQL: debug
     org.hibernate.orm.jdbc.bind: trace
+
+blt:
+  cors:
+    allowed-origin-patterns: ${CORS_ALLOWED_ORIGIN_PATTERNS:http://localhost:*,https://localhost:*,http://127.0.0.1:*,https://127.0.0.1:*}
+  jwt:
+    secret: ${JWT_SECRET:local-development-jwt-secret-change-me-at-deploy-time}
+  apple:
+    # Bundle ID
+    client-id: ${APPLE_CLIENT_ID:BLT.com}

@@ -41,6 +41,8 @@ out/
 
 ### env ###
 .env
+.env.*
+/secrets/
 *.p8
 
 ### macOS ###
