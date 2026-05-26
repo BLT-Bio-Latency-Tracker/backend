@@ -156,13 +156,5 @@ class AuthService(
         )
     }
 
-    private fun HttpServletRequest.clientIp(): String? {
-        val forwardedFor = getHeader("X-Forwarded-For")
-            ?.split(",")
-            ?.firstOrNull()
-            ?.trim()
-            ?.takeIf { ip -> ip.isNotBlank() }
-
-        return forwardedFor ?: remoteAddr
-    }
+    private fun HttpServletRequest.clientIp(): String? = remoteAddr
 }
