@@ -19,7 +19,7 @@ import java.time.LocalTime
 @Table(
     name = "users",
     indexes = [
-        Index(name = "idx_users_apple_sub_hash", columnList = "apple_sub_hash"),
+        Index(name = "idx_users_apple_sub_hash", columnList = "apple_sub_hash", unique = true),
         Index(name = "idx_users_status", columnList = "status"),
     ],
 )
