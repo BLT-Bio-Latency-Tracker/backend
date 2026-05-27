@@ -127,7 +127,15 @@ class AuthService(
 
     @Transactional
     fun logout(principal: AuthUserPrincipal?, request: LogoutRequest) {
-        principal?.userId ?: throw BltException(ErrorCode.AUTH_INVALID_CREDENTIALS)
+        val principalUserId = principal?.userId ?: throw BltException(ErrorCode.AUTH_INVALID_CREDENTIALS)
+        if (request.refreshToken.isBlank()) {
+            throw BltException(ErrorCode.AUTH_INVALID_CREDENTIALS)
+        }
+
+        val tokenUserId = jwtTokenProvider.getUserIdFromRefreshToken(request.refreshToken)
+        if (tokenUserId != principalUserId) {
+            throw BltException(ErrorCode.AUTH_INVALID_CREDENTIALS)
+        }
 
         val tokenHash = HashUtils.sha256Hex(request.refreshToken)
         refreshTokenRepository.revokeActiveToken(tokenHash, Instant.now())
