@@ -11,7 +11,7 @@ import com.medilux.blt.domain.user.repository.UserDeviceRepository
 import com.medilux.blt.domain.user.repository.UserRepository
 import com.medilux.blt.global.common.util.HashUtils
 import org.springframework.stereotype.Service
-import org.springframework.transaction.annotation.Transactional
+import org.springframework.transaction.support.TransactionTemplate
 import java.time.Duration
 import java.time.Instant
 import java.util.UUID
@@ -25,8 +25,8 @@ class UserWithdrawalCleanupService(
     private val consentLogRepository: ConsentLogRepository,
     private val sleepRecordRepository: SleepRecordRepository,
     private val recommendationRepository: RecommendationRepository,
+    private val transactionTemplate: TransactionTemplate,
 ) {
-    @Transactional
     fun cleanupExpiredWithdrawals(now: Instant = Instant.now()): Int {
         val cutoff = now.minus(WITHDRAW_GRACE_PERIOD)
         var cleanedCount = 0
@@ -40,11 +40,28 @@ class UserWithdrawalCleanupService(
                 return cleanedCount
             }
 
-            users.forEach { user ->
-                cleanupUser(user, now)
-                cleanedCount += 1
+            users.map { user -> user.id }.forEach { userId ->
+                val cleaned = transactionTemplate.execute {
+                    cleanupUserById(userId, cutoff, now)
+                } ?: false
+
+                if (cleaned) {
+                    cleanedCount += 1
+                }
             }
         }
+    }
+
+    private fun cleanupUserById(userId: Long, cutoff: Instant, now: Instant): Boolean {
+        val user = userRepository.findById(userId).orElse(null) ?: return false
+        val withdrawnAt = user.withdrawnAt ?: return false
+
+        if (user.status != UserStatus.WITHDRAW_PENDING || withdrawnAt > cutoff) {
+            return false
+        }
+
+        cleanupUser(user, now)
+        return true
     }
 
     private fun cleanupUser(user: User, now: Instant) {
