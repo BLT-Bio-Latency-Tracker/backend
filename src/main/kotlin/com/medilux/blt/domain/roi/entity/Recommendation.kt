@@ -2,8 +2,10 @@ package com.medilux.blt.domain.roi.entity
 
 import com.medilux.blt.global.common.entity.BaseEntity
 import jakarta.persistence.Column
+import jakarta.persistence.ConstraintMode
 import jakarta.persistence.Entity
 import jakarta.persistence.FetchType
+import jakarta.persistence.ForeignKey
 import jakarta.persistence.GeneratedValue
 import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
@@ -25,7 +27,7 @@ import org.hibernate.type.SqlTypes
 @SQLRestriction("deleted_at IS NULL")
 class Recommendation(
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "roi_score_id", nullable = false, updatable = false)
+    @JoinColumn(name = "roi_score_id", nullable = false, updatable = false, foreignKey = ForeignKey(ConstraintMode.NO_CONSTRAINT))
     val roiScore: BrainRoiScore,
     @Column(name = "quadrant_key", nullable = false)
     val quadrantKey: String,

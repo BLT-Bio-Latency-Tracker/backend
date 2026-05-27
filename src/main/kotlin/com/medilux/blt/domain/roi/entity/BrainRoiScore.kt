@@ -5,10 +5,12 @@ import com.medilux.blt.domain.sleep.entity.SleepRecord
 import com.medilux.blt.domain.user.entity.User
 import com.medilux.blt.global.common.entity.BaseEntity
 import jakarta.persistence.Column
+import jakarta.persistence.ConstraintMode
 import jakarta.persistence.Entity
 import jakarta.persistence.EnumType
 import jakarta.persistence.Enumerated
 import jakarta.persistence.FetchType
+import jakarta.persistence.ForeignKey
 import jakarta.persistence.GeneratedValue
 import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
@@ -33,13 +35,13 @@ import java.time.Instant
 @SQLRestriction("deleted_at IS NULL")
 class BrainRoiScore(
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false, updatable = false)
+    @JoinColumn(name = "user_id", nullable = false, updatable = false, foreignKey = ForeignKey(ConstraintMode.NO_CONSTRAINT))
     val user: User,
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "session_id", nullable = false, updatable = false)
+    @JoinColumn(name = "session_id", nullable = false, updatable = false, foreignKey = ForeignKey(ConstraintMode.NO_CONSTRAINT))
     val session: PvtSession,
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "sleep_id", nullable = false, updatable = false)
+    @JoinColumn(name = "sleep_id", nullable = false, updatable = false, foreignKey = ForeignKey(ConstraintMode.NO_CONSTRAINT))
     val sleepRecord: SleepRecord,
     @Enumerated(EnumType.STRING)
     @Column(name = "calculation_scenario", nullable = false)

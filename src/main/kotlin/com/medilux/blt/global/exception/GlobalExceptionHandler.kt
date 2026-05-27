@@ -31,28 +31,28 @@ class GlobalExceptionHandler {
 
         val problemDetail =
             ProblemDetail.forStatusAndDetail(
-                ErrorCode.INVALID_REQUEST.status,
-                ErrorCode.INVALID_REQUEST.message,
+                ErrorCode.VALIDATION_FAILED.status,
+                ErrorCode.VALIDATION_FAILED.message,
             )
-        problemDetail.title = ErrorCode.INVALID_REQUEST.status.reasonPhrase
-        problemDetail.setProperty("errorCode", ErrorCode.INVALID_REQUEST.code)
+        problemDetail.title = ErrorCode.VALIDATION_FAILED.status.reasonPhrase
+        problemDetail.setProperty("errorCode", ErrorCode.VALIDATION_FAILED.code)
         problemDetail.setProperty("fieldErrors", fieldErrors)
 
-        return ResponseEntity.status(ErrorCode.INVALID_REQUEST.status).body(problemDetail)
+        return ResponseEntity.status(ErrorCode.VALIDATION_FAILED.status).body(problemDetail)
     }
 
     @ExceptionHandler(ConstraintViolationException::class)
     fun handleConstraintViolationException(ex: ConstraintViolationException): ResponseEntity<ProblemDetail> = buildProblemDetail(
-        status = ErrorCode.INVALID_REQUEST.status,
-        detail = ex.message ?: ErrorCode.INVALID_REQUEST.message,
-        errorCode = ErrorCode.INVALID_REQUEST.code,
+        status = ErrorCode.VALIDATION_FAILED.status,
+        detail = ex.message ?: ErrorCode.VALIDATION_FAILED.message,
+        errorCode = ErrorCode.VALIDATION_FAILED.code,
     )
 
     @ExceptionHandler(HttpMessageNotReadableException::class)
     fun handleHttpMessageNotReadableException(ex: HttpMessageNotReadableException): ResponseEntity<ProblemDetail> = buildProblemDetail(
-        status = ErrorCode.INVALID_REQUEST.status,
-        detail = ErrorCode.INVALID_REQUEST.message,
-        errorCode = ErrorCode.INVALID_REQUEST.code,
+        status = ErrorCode.VALIDATION_FAILED.status,
+        detail = ErrorCode.VALIDATION_FAILED.message,
+        errorCode = ErrorCode.VALIDATION_FAILED.code,
     )
 
     @ExceptionHandler(AuthenticationException::class)
@@ -93,7 +93,7 @@ class GlobalExceptionHandler {
 
     private fun FieldError.toErrorResponse(): ValidationErrorResponse = ValidationErrorResponse(
         field = field,
-        message = defaultMessage ?: ErrorCode.INVALID_REQUEST.message,
+        message = defaultMessage ?: ErrorCode.VALIDATION_FAILED.message,
     )
 
     data class ValidationErrorResponse(val field: String, val message: String)

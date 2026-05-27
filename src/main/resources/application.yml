@@ -1,7 +1,7 @@
-# 공통 설정만 유지, 기본 프로필은 local
 spring:
   application:
     name: blt
+
   profiles:
     default: local
 
@@ -9,12 +9,13 @@ spring:
     driver-class-name: org.postgresql.Driver
 
   jpa:
+    open-in-view: false
+    show-sql: false
     hibernate:
       ddl-auto: validate
-    open-in-view: false
     properties:
       hibernate:
-        format_sql: true
+        format_sql: false
 
 server:
   port: ${SERVER_PORT:8080}
@@ -25,4 +26,13 @@ springdoc:
 
 blt:
   cors:
-    allowed-origin-patterns: ${CORS_ALLOWED_ORIGIN_PATTERNS:http://localhost:*,https://localhost:*,http://127.0.0.1:*,https://127.0.0.1:*}
+    allowed-origin-patterns: ${CORS_ALLOWED_ORIGIN_PATTERNS}
+  jwt:
+    issuer: ${JWT_ISSUER:blt-api}
+    secret: ${JWT_SECRET}
+    access-token-ttl-minutes: ${JWT_ACCESS_TOKEN_TTL_MINUTES:60}
+    refresh-token-ttl-days: ${JWT_REFRESH_TOKEN_TTL_DAYS:30}
+    verification-token-ttl-minutes: ${JWT_VERIFICATION_TOKEN_TTL_MINUTES:5}
+  apple:
+    issuer: ${APPLE_ISSUER:https://appleid.apple.com}
+    client-id: ${APPLE_CLIENT_ID}

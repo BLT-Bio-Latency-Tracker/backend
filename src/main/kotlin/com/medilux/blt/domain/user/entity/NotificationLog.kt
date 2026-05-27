@@ -2,10 +2,12 @@ package com.medilux.blt.domain.user.entity
 
 import com.medilux.blt.global.common.entity.BaseEntity
 import jakarta.persistence.Column
+import jakarta.persistence.ConstraintMode
 import jakarta.persistence.Entity
 import jakarta.persistence.EnumType
 import jakarta.persistence.Enumerated
 import jakarta.persistence.FetchType
+import jakarta.persistence.ForeignKey
 import jakarta.persistence.GeneratedValue
 import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
@@ -29,10 +31,10 @@ import java.time.Instant
 @SQLRestriction("deleted_at IS NULL")
 class NotificationLog(
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false, updatable = false)
+    @JoinColumn(name = "user_id", nullable = false, updatable = false, foreignKey = ForeignKey(ConstraintMode.NO_CONSTRAINT))
     val user: User,
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_device_id")
+    @JoinColumn(name = "user_device_id", foreignKey = ForeignKey(ConstraintMode.NO_CONSTRAINT))
     val userDevice: UserDevice? = null,
     @Enumerated(EnumType.STRING)
     @Column(name = "notification_type", nullable = false)

@@ -2,10 +2,12 @@ package com.medilux.blt.domain.user.entity
 
 import com.medilux.blt.global.common.entity.BaseEntity
 import jakarta.persistence.Column
+import jakarta.persistence.ConstraintMode
 import jakarta.persistence.Entity
 import jakarta.persistence.EnumType
 import jakarta.persistence.Enumerated
 import jakarta.persistence.FetchType
+import jakarta.persistence.ForeignKey
 import jakarta.persistence.GeneratedValue
 import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
@@ -21,12 +23,13 @@ import java.time.Instant
     name = "consent_logs",
     indexes = [
         Index(name = "idx_consent_logs_user_id", columnList = "user_id"),
+        Index(name = "idx_consent_logs_audit_trail", columnList = "user_id, consent_type, agreed_at DESC"),
     ],
 )
 @SQLRestriction("deleted_at IS NULL")
 class ConsentLog(
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false, updatable = false)
+    @JoinColumn(name = "user_id", nullable = false, updatable = false, foreignKey = ForeignKey(ConstraintMode.NO_CONSTRAINT))
     val user: User,
     @Enumerated(EnumType.STRING)
     @Column(name = "consent_type", nullable = false, length = 30, updatable = false)
@@ -45,9 +48,9 @@ class ConsentLog(
     val id: Long = 0L
 }
 
-enum class ConsentType {
-    TERMS_OF_SERVICE,
-    PRIVACY_POLICY,
-    HEALTH_DATA,
-    MARKETING,
+enum class ConsentType(val required: Boolean) {
+    TERMS_OF_SERVICE(true),
+    PRIVACY_POLICY(true),
+    HEALTH_DATA(true),
+    MARKETING(false),
 }
