@@ -21,4 +21,25 @@ interface RefreshTokenRepository : JpaRepository<RefreshToken, Long> {
         """,
     )
     fun revokeActiveToken(@Param("tokenHash") tokenHash: String, @Param("revokedAt") revokedAt: Instant): Int
+
+    @Modifying
+    @Query(
+        """
+        UPDATE RefreshToken r
+           SET r.revokedAt = :now
+         WHERE r.user.id = :userId
+           AND r.revokedAt IS NULL
+           AND r.expiresAt > :now
+        """,
+    )
+    fun revokeAllActiveByUserId(@Param("userId") userId: Long, @Param("now") now: Instant): Int
+
+    @Modifying
+    @Query(
+        """
+        DELETE FROM RefreshToken r
+         WHERE r.user.id = :userId
+        """,
+    )
+    fun deleteAllByUserId(@Param("userId") userId: Long): Int
 }

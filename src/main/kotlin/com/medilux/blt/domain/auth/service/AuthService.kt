@@ -4,10 +4,12 @@ import com.medilux.blt.domain.auth.dto.AppleAuthResponse
 import com.medilux.blt.domain.auth.dto.AppleSignupRequest
 import com.medilux.blt.domain.auth.dto.AppleVerifyRequest
 import com.medilux.blt.domain.auth.dto.AuthSessionResponse
+import com.medilux.blt.domain.auth.dto.LogoutRequest
 import com.medilux.blt.domain.auth.dto.RefreshTokenRequest
 import com.medilux.blt.domain.auth.entity.RefreshToken
 import com.medilux.blt.domain.auth.repository.RefreshTokenRepository
 import com.medilux.blt.domain.auth.security.AppleIdTokenVerifier
+import com.medilux.blt.domain.auth.security.AuthUserPrincipal
 import com.medilux.blt.domain.auth.security.JwtTokenProvider
 import com.medilux.blt.domain.user.entity.AuthType
 import com.medilux.blt.domain.user.entity.ConsentLog
@@ -43,6 +45,12 @@ class AuthService(
         val user = userRepository.findByAppleSubHash(appleSubHash)
 
         if (user != null) {
+            if (user.status == UserStatus.WITHDRAW_PENDING) {
+                user.status = UserStatus.ACTIVE
+                user.withdrawnAt = null
+                userRepository.save(user)
+            }
+
             return AppleAuthResponse.existing(createSession(user))
         }
 
@@ -115,6 +123,22 @@ class AuthService(
         }
 
         return createSession(savedRefreshToken.user)
+    }
+
+    @Transactional
+    fun logout(principal: AuthUserPrincipal?, request: LogoutRequest) {
+        val principalUserId = principal?.userId ?: throw BltException(ErrorCode.AUTH_INVALID_CREDENTIALS)
+        if (request.refreshToken.isBlank()) {
+            throw BltException(ErrorCode.AUTH_INVALID_CREDENTIALS)
+        }
+
+        val tokenUserId = jwtTokenProvider.getUserIdFromRefreshToken(request.refreshToken)
+        if (tokenUserId != principalUserId) {
+            throw BltException(ErrorCode.AUTH_INVALID_CREDENTIALS)
+        }
+
+        val tokenHash = HashUtils.sha256Hex(request.refreshToken)
+        refreshTokenRepository.revokeActiveToken(tokenHash, Instant.now())
     }
 
     private fun validateConsents(request: AppleSignupRequest) {

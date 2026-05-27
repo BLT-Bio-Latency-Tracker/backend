@@ -13,6 +13,7 @@ import jakarta.persistence.Table
 import org.hibernate.annotations.JdbcTypeCode
 import org.hibernate.annotations.SQLRestriction
 import org.hibernate.type.SqlTypes
+import java.time.Instant
 import java.time.LocalTime
 
 @Entity
@@ -25,8 +26,8 @@ import java.time.LocalTime
 )
 @SQLRestriction("deleted_at IS NULL")
 class User(
-    @Column(name = "apple_sub_hash", nullable = false, length = 64, updatable = false)
-    val appleSubHash: String,
+    @Column(name = "apple_sub_hash", nullable = false, length = 64)
+    var appleSubHash: String,
     @Column(name = "email", length = 255)
     var email: String? = null,
     @Column(name = "nickname", length = 50)
@@ -34,6 +35,8 @@ class User(
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 20)
     var status: UserStatus = UserStatus.ACTIVE,
+    @Column(name = "withdrawn_at")
+    var withdrawnAt: Instant? = null,
     @Enumerated(EnumType.STRING)
     @Column(name = "auth_type", nullable = false, length = 20, updatable = false)
     val authType: AuthType,
