@@ -102,16 +102,17 @@ class AuthService(
         val savedRefreshToken = refreshTokenRepository.findByTokenHash(tokenHash)
             ?: throw BltException(ErrorCode.AUTH_INVALID_CREDENTIALS)
 
-        val now = Instant.now()
-        if (
-            savedRefreshToken.revokedAt != null ||
-            !savedRefreshToken.expiresAt.isAfter(now) ||
-            savedRefreshToken.user.id != userId
-        ) {
+        if (savedRefreshToken.user.id != userId) {
             throw BltException(ErrorCode.AUTH_INVALID_CREDENTIALS)
         }
 
-        savedRefreshToken.revokedAt = now
+        val revokedCount = refreshTokenRepository.revokeActiveToken(
+            tokenHash = tokenHash,
+            revokedAt = Instant.now(),
+        )
+        if (revokedCount != 1) {
+            throw BltException(ErrorCode.AUTH_INVALID_CREDENTIALS)
+        }
 
         return createSession(savedRefreshToken.user)
     }
