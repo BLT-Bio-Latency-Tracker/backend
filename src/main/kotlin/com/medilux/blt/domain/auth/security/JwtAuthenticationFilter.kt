@@ -21,7 +21,8 @@ class JwtAuthenticationFilter(
 ) : OncePerRequestFilter() {
     override fun shouldNotFilter(request: HttpServletRequest): Boolean {
         val path = request.servletPath
-        return path.startsWith("/api/v1/auth/") ||
+        return path.startsWith("/api/v1/auth/apple/") ||
+            path == "/api/v1/auth/refresh" ||
             path == "/v3/api-docs" ||
             path.startsWith("/v3/api-docs/") ||
             path.startsWith("/swagger-ui/") ||
