@@ -15,6 +15,7 @@ import jakarta.persistence.Index
 import jakarta.persistence.JoinColumn
 import jakarta.persistence.ManyToOne
 import jakarta.persistence.Table
+import jakarta.persistence.UniqueConstraint
 import org.hibernate.annotations.SQLRestriction
 import java.time.Instant
 
@@ -24,6 +25,9 @@ import java.time.Instant
     indexes = [
         Index(name = "idx_user_devices_user_id", columnList = "user_id"),
         Index(name = "idx_user_devices_fcm_token", columnList = "fcm_token"),
+    ],
+    uniqueConstraints = [
+        UniqueConstraint(name = "uq_user_devices_user_fcm", columnNames = ["user_id", "fcm_token"]),
     ],
 )
 @SQLRestriction("deleted_at IS NULL")
