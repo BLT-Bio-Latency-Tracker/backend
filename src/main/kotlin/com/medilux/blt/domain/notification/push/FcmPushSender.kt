@@ -33,8 +33,9 @@ class FcmPushSender(private val firebaseMessaging: FirebaseMessaging) : PushSend
             PushResult.failure(
                 errorCode = ex.messagingErrorCode?.name ?: "FCM_ERROR",
                 errorMessage = ex.message,
-                invalidToken = ex.messagingErrorCode == MessagingErrorCode.UNREGISTERED ||
-                    ex.messagingErrorCode == MessagingErrorCode.INVALID_ARGUMENT,
+                // UNREGISTERED 만 토큰 무효로 간주(디바이스 revoke). INVALID_ARGUMENT 는
+                // 페이로드 크기/데이터 키/TTL/파라미터 오류 등 토큰과 무관한 사유도 포함하므로 제외.
+                invalidToken = ex.messagingErrorCode == MessagingErrorCode.UNREGISTERED,
             )
         }
     }
