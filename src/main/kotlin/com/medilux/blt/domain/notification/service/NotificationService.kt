@@ -15,6 +15,9 @@ import java.time.Instant
 class NotificationService(private val notificationLogRepository: NotificationLogRepository) {
     @Transactional(readOnly = true)
     fun list(userId: Long, category: NotificationCategory, page: Int, size: Int): NotificationPageResponse {
+        if (page < 0 || size < 1 || size > MAX_PAGE_SIZE) {
+            throw BltException(ErrorCode.VALIDATION_FAILED)
+        }
         val pageable = PageRequest.of(page, size)
         val result = if (category.types == null) {
             notificationLogRepository.findByUserIdOrderByScheduledAtDesc(userId, pageable)
@@ -46,5 +49,9 @@ class NotificationService(private val notificationLogRepository: NotificationLog
     @Transactional
     fun deleteAll(userId: Long) {
         notificationLogRepository.softDeleteAllByUserId(userId, Instant.now())
+    }
+
+    private companion object {
+        const val MAX_PAGE_SIZE = 100
     }
 }

@@ -20,6 +20,10 @@ class DeviceService(private val userRepository: UserRepository, private val user
     @Transactional
     fun register(userId: Long, request: DeviceRegisterRequest): DeviceResponse {
         val now = Instant.now()
+
+        // 같은 토큰이 다른 사용자에 활성화돼 있으면 회수해 한 디바이스에 여러 사용자가 살아남지 않도록 한다.
+        userDeviceRepository.revokeActiveByFcmTokenForOtherUsers(request.fcmToken, userId, now)
+
         val existing = userDeviceRepository.findByUserIdAndFcmToken(userId, request.fcmToken)
 
         val device = if (existing != null) {

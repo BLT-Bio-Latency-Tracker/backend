@@ -14,6 +14,23 @@ interface UserDeviceRepository : JpaRepository<UserDevice, Long> {
 
     fun findByUserIdAndRevokedAtIsNull(userId: Long): List<UserDevice>
 
+    /** 같은 FCM 토큰이 다른 사용자에 활성화돼 있으면 회수(한 디바이스 = 한 사용자). */
+    @Modifying
+    @Query(
+        """
+        UPDATE UserDevice d
+           SET d.revokedAt = :now
+         WHERE d.fcmToken = :fcmToken
+           AND d.user.id <> :userId
+           AND d.revokedAt IS NULL
+        """,
+    )
+    fun revokeActiveByFcmTokenForOtherUsers(
+        @Param("fcmToken") fcmToken: String,
+        @Param("userId") userId: Long,
+        @Param("now") now: Instant,
+    ): Int
+
     @Modifying
     @Query(
         """
