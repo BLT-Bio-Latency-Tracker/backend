@@ -8,6 +8,12 @@ import org.springframework.data.repository.query.Param
 import java.time.Instant
 
 interface UserDeviceRepository : JpaRepository<UserDevice, Long> {
+    fun findByUserIdAndFcmToken(userId: Long, fcmToken: String): UserDevice?
+
+    fun findByIdAndUserId(id: Long, userId: Long): UserDevice?
+
+    fun findByUserIdAndRevokedAtIsNull(userId: Long): List<UserDevice>
+
     @Modifying
     @Query(
         """
