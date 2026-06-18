@@ -18,6 +18,7 @@ import com.medilux.blt.domain.user.entity.User
 import com.medilux.blt.domain.user.entity.UserStatus
 import com.medilux.blt.domain.user.repository.ConsentLogRepository
 import com.medilux.blt.domain.user.repository.UserRepository
+import com.medilux.blt.domain.user.service.UserWithdrawalCleanupService
 import com.medilux.blt.global.common.util.HashUtils
 import com.medilux.blt.global.exception.BltException
 import com.medilux.blt.global.exception.ErrorCode
@@ -33,6 +34,7 @@ class AuthService(
     private val userRepository: UserRepository,
     private val consentLogRepository: ConsentLogRepository,
     private val refreshTokenRepository: RefreshTokenRepository,
+    private val userWithdrawalCleanupService: UserWithdrawalCleanupService,
 ) {
     @Transactional
     fun verifyApple(request: AppleVerifyRequest): AppleAuthResponse {
@@ -45,13 +47,13 @@ class AuthService(
         val user = userRepository.findByAppleSubHash(appleSubHash)
 
         if (user != null) {
-            if (user.status == UserStatus.WITHDRAW_PENDING) {
-                user.status = UserStatus.ACTIVE
-                user.withdrawnAt = null
-                userRepository.save(user)
+            if (user.status != UserStatus.WITHDRAW_PENDING) {
+                return AppleAuthResponse.existing(createSession(user))
             }
 
-            return AppleAuthResponse.existing(createSession(user))
+            // 탈퇴 유예 중 동일 Apple ID 재로그인: 자동 복구하지 않고(복구 불가 정책) 기존 계정을 즉시 익명화(파기)한 뒤 아래 신규 가입 경로로 진행한다.
+            // 익명화 시 appleSubHash가 재생성되고 soft delete 되므로, 신규 가입은 새 계정으로 생성된다.
+            userWithdrawalCleanupService.anonymizeImmediately(user)
         }
 
         val verificationToken = jwtTokenProvider.issueVerificationToken(appleSubHash)

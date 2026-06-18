@@ -72,6 +72,7 @@ class NotificationLog(
 
 enum class NotificationType {
     PVT_REMINDER,
+    SLEEP_REMINDER,
     ROI_SCORE,
     RECOMMENDATION,
     SYSTEM,

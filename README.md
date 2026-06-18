@@ -42,3 +42,125 @@ src/main/kotlin/com/medilux/blt
     ├── recommender
     ├── dto
     └── domain        // BrainRoiScore, Recommendation
+```
+
+---
+
+## ⚙️ 사전 요구사항 (Prerequisites)
+
+| 항목 | 버전 / 비고 |
+|---|---|
+| **JDK** | 21 (Gradle Toolchain 기준) |
+| **Docker / Docker Compose** | DB(PostgreSQL 16) 및 테스트(Testcontainers) 실행에 필요 |
+| **Gradle** | 설치 불필요 — 저장소의 `./gradlew`(Wrapper, 8.14.4) 사용 |
+
+> 💡 모든 명령은 프로젝트 루트에서 실행합니다. Windows는 `./gradlew` 대신 `gradlew.bat` 사용.
+
+---
+
+## 🚀 빌드 & 실행 (Local)
+
+### 1단계 — 환경변수 파일 생성
+```bash
+cp .env.example .env
+```
+- `.env` 의 `POSTGRES_*` 값은 Docker Compose(DB)가 사용합니다.
+- 로컬 프로파일은 `application-local.yml` 에 기본값이 있어 별도 시크릿 없이 바로 실행됩니다.
+
+### 2단계 — 데이터베이스 기동 (PostgreSQL 16)
+```bash
+docker compose up -d postgres        # v2 (구버전은 docker-compose up -d)
+```
+```bash
+docker compose ps                    # 상태 확인 (healthy 인지)
+```
+
+### 3단계 — 애플리케이션 실행
+```bash
+./gradlew bootRun                    # 기본 프로파일: local
+```
+- 접속: http://localhost:8080
+- API 문서(Swagger): http://localhost:8080/swagger-ui.html
+- 로컬은 `ddl-auto=update` 라 스키마가 엔티티 기준으로 자동 생성됩니다.
+
+### (선택) 프로파일 지정 실행
+```bash
+SPRING_PROFILES_ACTIVE=dev ./gradlew bootRun
+# 또는
+./gradlew bootRun --args='--spring.profiles.active=dev'
+```
+
+---
+
+## 📦 빌드 (Jar 패키징)
+
+```bash
+./gradlew clean build                # 컴파일 + 린트 + 테스트 + Jar
+```
+```bash
+./gradlew bootJar                    # 실행 가능한 Jar만 생성
+```
+```bash
+java -jar build/libs/blt-0.0.1-SNAPSHOT.jar
+# 프로파일 지정:
+SPRING_PROFILES_ACTIVE=prod java -jar build/libs/blt-0.0.1-SNAPSHOT.jar
+```
+> ⚠️ `build`/`test` 는 **Testcontainers** 로 실제 PostgreSQL을 띄우므로 **Docker 데몬이 실행 중**이어야 합니다.
+> 테스트 없이 빌드만: `./gradlew build -x test`
+
+---
+
+## 🧪 테스트 & 코드 스타일
+
+```bash
+./gradlew test                       # 전체 테스트 (Testcontainers → Docker 필요)
+./gradlew test --tests "com.medilux.blt.domain.notification.*"   # 특정 테스트만
+```
+```bash
+./gradlew ktlintCheck                # 코드 스타일 검사
+./gradlew ktlintFormat               # 자동 포맷 적용
+```
+```bash
+./gradlew build                      # 컴파일 + ktlint + 전체 테스트 (CI 동등)
+```
+
+---
+
+## 🌱 프로파일 & 환경변수
+
+| 프로파일 | `ddl-auto` | Swagger | 용도 |
+|---|---|---|---|
+| `local` (기본) | `update` | ON | 로컬 개발 (기본값 내장) |
+| `dev` | `validate` | ON | 개발 서버 |
+| `prod` | `validate` | OFF | 운영 |
+
+주요 환경변수 (`.env.example` 참고):
+- **DB**: `DB_URL`, `DB_USERNAME`, `DB_PASSWORD`, `POSTGRES_*`
+- **JWT**: `JWT_SECRET`(64byte 권장), `JWT_*_TTL_*`
+- **Apple**: `APPLE_ISSUER`, `APPLE_CLIENT_ID`(Bundle ID)
+- **FCM(푸시)**: `FCM_ENABLED`, `FCM_CREDENTIALS_PATH`, `FCM_PROJECT_ID`
+
+dev/prod DB는 전용 compose 파일 사용:
+```bash
+docker compose -f docker-compose.dev.yml up -d      # 개발
+docker compose -f docker-compose.prod.yml up -d     # 운영
+```
+
+---
+
+## 🔔 FCM (푸시 알림)
+
+| 환경 | 설정 |
+|---|---|
+| **local / test** | `FCM_ENABLED=false` — 실제 발송 없이 로그만(`LoggingPushSender`), 크레덴셜 불필요 |
+| **prod** | `FCM_ENABLED=true` + `FCM_CREDENTIALS_PATH`(서비스계정 JSON 경로). Firebase 콘솔에 APNs 인증키(.p8) 업로드 필요 |
+
+---
+
+## 🛑 종료 / 정리
+
+```bash
+docker compose down                  # DB 컨테이너 중지
+docker compose down -v               # DB 컨테이너 + 데이터 볼륨까지 삭제
+./gradlew --stop                     # Gradle 데몬 종료
+```

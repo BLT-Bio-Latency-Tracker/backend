@@ -28,4 +28,7 @@ enum class ErrorCode(val status: HttpStatus, val code: String, val message: Stri
     INVALID_PVT(HttpStatus.BAD_REQUEST, "INVALID_PVT", "Invalid PVT result."),
     INVALID_SLEEP_DATA(HttpStatus.BAD_REQUEST, "INVALID_SLEEP_DATA", "Invalid sleep data."),
     BRAIN_ROI_NOT_FOUND(HttpStatus.NOT_FOUND, "BRAIN_ROI_NOT_FOUND", "Brain ROI score was not found."),
+
+    DEVICE_NOT_FOUND(HttpStatus.NOT_FOUND, "DEVICE_NOT_FOUND", "Device was not found."),
+    NOTIFICATION_NOT_FOUND(HttpStatus.NOT_FOUND, "NOTIFICATION_NOT_FOUND", "Notification was not found."),
 }

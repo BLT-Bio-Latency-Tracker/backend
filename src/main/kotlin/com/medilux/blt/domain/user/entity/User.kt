@@ -54,8 +54,6 @@ class User(
     var onboardingCompleted: Boolean = false,
 
     /** User Notification Settings **/
-    @Column(name = "apns_device_token", length = 64)
-    var apnsDeviceToken: String? = null,
     @Column(name = "notification_enabled", nullable = false)
     var notificationEnabled: Boolean = true,
     @Column(name = "sleep_reminder_time", nullable = false)
@@ -90,10 +88,8 @@ enum class Gender {
 }
 
 enum class Occupation {
+    KNOWLEDGE_WORKER,
+    FIELD_WORKER,
     STUDENT,
-    OFFICE_WORKER,
-    HEALTHCARE_WORKER,
-    SHIFT_WORKER,
-    SELF_EMPLOYED,
     OTHER,
 }
