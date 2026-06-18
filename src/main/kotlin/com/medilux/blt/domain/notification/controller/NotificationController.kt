@@ -8,8 +8,11 @@ import com.medilux.blt.global.exception.BltException
 import com.medilux.blt.global.exception.ErrorCode
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.tags.Tag
+import jakarta.validation.constraints.Max
+import jakarta.validation.constraints.Min
 import org.springframework.http.HttpStatus
 import org.springframework.security.core.annotation.AuthenticationPrincipal
+import org.springframework.validation.annotation.Validated
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
@@ -22,14 +25,15 @@ import org.springframework.web.bind.annotation.RestController
 @RestController
 @RequestMapping("/api/v1/notifications")
 @Tag(name = "Notifications", description = "알림함 조회/읽음 API")
+@Validated
 class NotificationController(private val notificationService: NotificationService) {
     @Operation(summary = "알림함 조회 및 필터")
     @GetMapping
     fun list(
         @AuthenticationPrincipal principal: AuthUserPrincipal?,
         @RequestParam(defaultValue = "ALL") category: NotificationCategory,
-        @RequestParam(defaultValue = "0") page: Int,
-        @RequestParam(defaultValue = "20") size: Int,
+        @RequestParam(defaultValue = "0") @Min(0) page: Int,
+        @RequestParam(defaultValue = "20") @Min(1) @Max(100) size: Int,
     ): NotificationPageResponse = notificationService.list(requireUserId(principal), category, page, size)
 
     @Operation(summary = "개별 알림 읽음 처리")
