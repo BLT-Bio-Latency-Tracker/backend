@@ -66,7 +66,7 @@ class UserService(
     fun updateProfile(userId: Long, request: ProfileUpdateRequest): UserResponse {
         val user = userRepository.findById(userId).orElseThrow { BltException(ErrorCode.USER_NOT_FOUND) }
 
-        request.nickname?.let { nickname -> user.nickname = nickname }
+        request.nickname?.trim()?.takeIf(String::isNotBlank)?.let { nickname -> user.nickname = nickname }
         request.birthYear?.let { birthYear ->
             if (birthYear.toInt() !in MIN_BIRTH_YEAR..Year.now().value) {
                 throw BltException(ErrorCode.VALIDATION_FAILED)
