@@ -54,8 +54,6 @@ class User(
     var onboardingCompleted: Boolean = false,
 
     /** User Notification Settings **/
-    @Column(name = "apns_device_token", length = 64)
-    var apnsDeviceToken: String? = null,
     @Column(name = "notification_enabled", nullable = false)
     var notificationEnabled: Boolean = true,
     @Column(name = "sleep_reminder_time", nullable = false)

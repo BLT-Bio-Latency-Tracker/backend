@@ -88,7 +88,6 @@ class UserWithdrawalCleanupService(
         user.email = null
         user.nickname = null
         user.occupation = null
-        user.apnsDeviceToken = null
         user.notificationEnabled = false
         user.customNotificationOptions = emptyMap()
         user.notificationTimezone = DEFAULT_NOTIFICATION_TIMEZONE
