@@ -90,10 +90,8 @@ enum class Gender {
 }
 
 enum class Occupation {
+    KNOWLEDGE_WORKER,
+    FIELD_WORKER,
     STUDENT,
-    OFFICE_WORKER,
-    HEALTHCARE_WORKER,
-    SHIFT_WORKER,
-    SELF_EMPLOYED,
     OTHER,
 }

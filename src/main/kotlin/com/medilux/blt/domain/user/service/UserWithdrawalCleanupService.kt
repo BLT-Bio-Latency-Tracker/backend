@@ -52,6 +52,16 @@ class UserWithdrawalCleanupService(
         }
     }
 
+    /**
+     * 탈퇴 유예 중인 사용자를 30일 대기 없이 즉시 익명화(파기).
+     *
+     * 탈퇴 유예 중 동일 Apple ID 재로그인 시, 자동 복구 대신 기존 계정을 파기하고
+     * 신규 가입으로 진행하기 위해 사용한다. (복구 불가 정책)
+     */
+    fun anonymizeImmediately(user: User, now: Instant = Instant.now()) {
+        cleanupUser(user, now)
+    }
+
     private fun cleanupUserById(userId: Long, cutoff: Instant, now: Instant): Boolean {
         val user = userRepository.findById(userId).orElse(null) ?: return false
         val withdrawnAt = user.withdrawnAt ?: return false

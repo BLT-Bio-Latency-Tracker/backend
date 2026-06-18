@@ -11,7 +11,7 @@ data class OnboardingRequest(
     val birthYear: Short?,
     @field:Schema(description = "성별", example = "FEMALE", nullable = true)
     val gender: Gender?,
-    @field:Schema(description = "직업", example = "OFFICE_WORKER", nullable = true)
+    @field:Schema(description = "직업", example = "KNOWLEDGE_WORKER", nullable = true)
     val occupation: Occupation?,
 )
 
@@ -23,7 +23,7 @@ data class OnboardingResponse(
     val birthYear: Short?,
     @field:Schema(description = "성별", example = "FEMALE", nullable = true)
     val gender: Gender?,
-    @field:Schema(description = "직업", example = "OFFICE_WORKER", nullable = true)
+    @field:Schema(description = "직업", example = "KNOWLEDGE_WORKER", nullable = true)
     val occupation: Occupation?,
     @field:Schema(description = "온보딩 완료 여부", example = "true")
     val onboardingCompleted: Boolean,
