@@ -23,6 +23,7 @@ interface UserRepository : JpaRepository<User, Long> {
         """
         SELECT u FROM User u
          WHERE u.notificationEnabled = true
+           AND u.status = com.medilux.blt.domain.user.entity.UserStatus.ACTIVE
            AND u.notificationTimezone = :zone
            AND u.pvtReminderTime = :localTime
            AND EXISTS (SELECT 1 FROM UserDevice d WHERE d.user = u AND d.revokedAt IS NULL)
@@ -38,6 +39,7 @@ interface UserRepository : JpaRepository<User, Long> {
         """
         SELECT u FROM User u
          WHERE u.notificationEnabled = true
+           AND u.status = com.medilux.blt.domain.user.entity.UserStatus.ACTIVE
            AND u.notificationTimezone = :zone
            AND u.sleepReminderTime = :localTime
            AND EXISTS (SELECT 1 FROM UserDevice d WHERE d.user = u AND d.revokedAt IS NULL)

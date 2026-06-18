@@ -59,6 +59,9 @@ class UserWithdrawalCleanupService(
      * 신규 가입으로 진행하기 위해 사용한다. (복구 불가 정책)
      */
     fun anonymizeImmediately(user: User, now: Instant = Instant.now()) {
+        check(user.status == UserStatus.WITHDRAW_PENDING) {
+            "즉시 익명화는 WITHDRAW_PENDING 상태에서만 가능합니다 (현재: ${user.status})"
+        }
         cleanupUser(user, now)
     }
 
