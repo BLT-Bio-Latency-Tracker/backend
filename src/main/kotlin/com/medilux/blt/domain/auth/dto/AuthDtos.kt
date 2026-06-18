@@ -23,7 +23,7 @@ data class AppleSignupRequest(
     @field:Schema(description = "사용자가 확인한 전체 약관 동의/비동의 목록", requiredMode = Schema.RequiredMode.REQUIRED)
     val consents: List<ConsentRequest>,
     @field:Schema(
-        description = "Apple 로그인 사용자 이름. 기본 닉네임으로 저장 (선택)",
+        description = "Apple 로그인 제공 사용자 이름을 기본 닉네임으로 저장 (선택). 미제공(null/공백) 시 서버가 랜덤 닉네임을 부여.",
         nullable = true,
     )
     @field:Size(max = 50)
