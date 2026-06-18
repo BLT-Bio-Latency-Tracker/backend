@@ -2,6 +2,7 @@ package com.medilux.blt.domain.auth.dto
 
 import com.medilux.blt.domain.user.entity.ConsentType
 import io.swagger.v3.oas.annotations.media.Schema
+import jakarta.validation.constraints.Size
 
 @Schema(description = "Apple identityToken 검증 요청")
 data class AppleVerifyRequest(
@@ -21,6 +22,12 @@ data class AppleSignupRequest(
     val verificationToken: String,
     @field:Schema(description = "사용자가 확인한 전체 약관 동의/비동의 목록", requiredMode = Schema.RequiredMode.REQUIRED)
     val consents: List<ConsentRequest>,
+    @field:Schema(
+        description = "Apple 로그인 사용자 이름. 기본 닉네임으로 저장 (선택)",
+        nullable = true,
+    )
+    @field:Size(max = 50)
+    val nickname: String? = null,
 )
 
 @Schema(description = "토큰 갱신 요청")

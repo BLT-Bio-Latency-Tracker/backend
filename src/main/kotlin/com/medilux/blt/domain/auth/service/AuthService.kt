@@ -81,6 +81,7 @@ class AuthService(
                 appleSubHash = appleSubHash,
                 authType = AuthType.APPLE,
                 status = UserStatus.ACTIVE,
+                nickname = request.nickname?.trim()?.takeIf(String::isNotBlank),
             ),
         )
         val now = Instant.now()
