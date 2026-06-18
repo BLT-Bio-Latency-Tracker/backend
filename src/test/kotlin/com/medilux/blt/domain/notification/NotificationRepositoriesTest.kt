@@ -171,6 +171,29 @@ class NotificationRepositoriesTest {
         assertThat(userDeviceRepository.findByUserIdAndFcmToken(user.id, "nope")).isNull()
     }
 
+    @Test
+    fun `softDeleteAllByUserId hides notifications from inbox`() {
+        val user = persistUser("hash-clear")
+        entityManager.persist(
+            NotificationLog(
+                user = user,
+                notificationType = NotificationType.PVT_REMINDER,
+                title = "t",
+                body = "b",
+                status = NotificationStatus.SENT,
+                scheduledAt = Instant.now(),
+            ),
+        )
+        entityManager.flush()
+
+        val deleted = notificationLogRepository.softDeleteAllByUserId(user.id, Instant.now())
+        entityManager.clear()
+
+        assertThat(deleted).isEqualTo(1)
+        val remaining = notificationLogRepository.findByUserIdOrderByScheduledAtDesc(user.id, PageRequest.of(0, 10))
+        assertThat(remaining.content).isEmpty()
+    }
+
     companion object {
         @Container
         @ServiceConnection

@@ -40,6 +40,18 @@ interface NotificationLogRepository : JpaRepository<NotificationLog, Long> {
     )
     fun markAllReadByUserId(@Param("userId") userId: Long, @Param("now") now: Instant): Int
 
+    /** 모두 지우기: 사용자 알림 전체 soft delete(`deletedAt` 마킹 → `@SQLRestriction`으로 알림함에서 숨김). */
+    @Modifying
+    @Query(
+        """
+        UPDATE NotificationLog n
+           SET n.deletedAt = :now
+         WHERE n.user.id = :userId
+           AND n.deletedAt IS NULL
+        """,
+    )
+    fun softDeleteAllByUserId(@Param("userId") userId: Long, @Param("now") now: Instant): Int
+
     @Modifying
     @Query(
         """

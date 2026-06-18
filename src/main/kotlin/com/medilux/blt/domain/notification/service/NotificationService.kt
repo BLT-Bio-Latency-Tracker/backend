@@ -42,4 +42,9 @@ class NotificationService(private val notificationLogRepository: NotificationLog
     fun markAllRead(userId: Long) {
         notificationLogRepository.markAllReadByUserId(userId, Instant.now())
     }
+
+    @Transactional
+    fun deleteAll(userId: Long) {
+        notificationLogRepository.softDeleteAllByUserId(userId, Instant.now())
+    }
 }
