@@ -26,6 +26,7 @@ import jakarta.servlet.http.HttpServletRequest
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.Instant
+import kotlin.random.Random
 
 @Service
 class AuthService(
@@ -81,6 +82,7 @@ class AuthService(
                 appleSubHash = appleSubHash,
                 authType = AuthType.APPLE,
                 status = UserStatus.ACTIVE,
+                nickname = request.nickname?.trim()?.takeIf(String::isNotBlank) ?: generateDefaultNickname(),
             ),
         )
         val now = Instant.now()
@@ -184,4 +186,7 @@ class AuthService(
     }
 
     private fun HttpServletRequest.clientIp(): String? = remoteAddr
+
+    /** Apple이 이름을 제공하지 않은 경우 부여하는 기본 닉네임. (이후 프로필 수정에서 변경 가능) */
+    private fun generateDefaultNickname(): String = "사용자" + Random.nextInt(0, 1_000_000).toString().padStart(6, '0')
 }

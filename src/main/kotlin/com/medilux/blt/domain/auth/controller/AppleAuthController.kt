@@ -8,6 +8,7 @@ import com.medilux.blt.domain.auth.service.AuthService
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.servlet.http.HttpServletRequest
+import jakarta.validation.Valid
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
@@ -23,6 +24,6 @@ class AppleAuthController(private val authService: AuthService) {
 
     @Operation(summary = "Apple 신규 사용자 약관 동의 후 가입")
     @PostMapping("/signup")
-    fun signup(@RequestBody request: AppleSignupRequest, httpServletRequest: HttpServletRequest): AuthSessionResponse =
+    fun signup(@Valid @RequestBody request: AppleSignupRequest, httpServletRequest: HttpServletRequest): AuthSessionResponse =
         authService.signup(request, httpServletRequest)
 }

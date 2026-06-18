@@ -4,6 +4,8 @@ import com.medilux.blt.domain.auth.repository.RefreshTokenRepository
 import com.medilux.blt.domain.auth.security.AuthUserPrincipal
 import com.medilux.blt.domain.user.dto.OnboardingRequest
 import com.medilux.blt.domain.user.dto.OnboardingResponse
+import com.medilux.blt.domain.user.dto.ProfileUpdateRequest
+import com.medilux.blt.domain.user.dto.UserResponse
 import com.medilux.blt.domain.user.dto.WithdrawResponse
 import com.medilux.blt.domain.user.entity.UserStatus
 import com.medilux.blt.domain.user.repository.UserDeviceRepository
@@ -52,6 +54,29 @@ class UserService(
         user.onboardingCompleted = true
 
         return OnboardingResponse.from(user)
+    }
+
+    @Transactional(readOnly = true)
+    fun getMyInfo(userId: Long): UserResponse {
+        val user = userRepository.findById(userId).orElseThrow { BltException(ErrorCode.USER_NOT_FOUND) }
+        return UserResponse.from(user)
+    }
+
+    @Transactional
+    fun updateProfile(userId: Long, request: ProfileUpdateRequest): UserResponse {
+        val user = userRepository.findById(userId).orElseThrow { BltException(ErrorCode.USER_NOT_FOUND) }
+
+        request.nickname?.trim()?.takeIf(String::isNotBlank)?.let { nickname -> user.nickname = nickname }
+        request.birthYear?.let { birthYear ->
+            if (birthYear.toInt() !in MIN_BIRTH_YEAR..Year.now().value) {
+                throw BltException(ErrorCode.VALIDATION_FAILED)
+            }
+            user.birthYear = birthYear
+        }
+        request.gender?.let { gender -> user.gender = gender }
+        request.occupation?.let { occupation -> user.occupation = occupation }
+
+        return UserResponse.from(user)
     }
 
     @Transactional
