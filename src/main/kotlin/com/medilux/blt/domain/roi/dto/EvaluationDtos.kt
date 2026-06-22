@@ -171,12 +171,16 @@ data class SleepDetail(
 ) {
     companion object {
         fun from(s: SleepRecord): SleepDetail {
-            fun ratio(part: Int?): Int? =
-                if (part != null && s.totalMinutes > 0) (part.toDouble() / s.totalMinutes * 100).roundToInt() else null
+            // 입력 이상치(예: 단계 합 > TST, TST > inBed)에서도 표시 지표는 0~100으로 clamp.
+            fun ratio(part: Int?): Int? = if (part != null && s.totalMinutes > 0) {
+                (part.toDouble() / s.totalMinutes * 100).roundToInt().coerceIn(0, 100)
+            } else {
+                null
+            }
 
             val efficiency = s.inBedMinutes
                 ?.takeIf { it > 0 }
-                ?.let { (s.totalMinutes.toDouble() / it * 100).roundToInt() }
+                ?.let { (s.totalMinutes.toDouble() / it * 100).roundToInt().coerceIn(0, 100) }
             return SleepDetail(
                 sleepDate = s.sleepDate,
                 totalMinutes = s.totalMinutes,
