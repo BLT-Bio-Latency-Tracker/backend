@@ -22,6 +22,7 @@ import com.medilux.blt.global.exception.ErrorCode
 import org.springframework.data.domain.PageRequest
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
 import java.util.Base64
@@ -118,12 +119,17 @@ class EvaluationService(
         val toDate = to ?: today
         val start = fromDate.atStartOfDay(zone).toInstant()
         val end = toDate.plusDays(1).atStartOfDay(zone).toInstant()
-        val cursorId = decodeCursor(cursor)
+        val decoded = decodeCursor(cursor)
+        val pageable = PageRequest.of(0, pageSize + 1)
 
-        val fetched = brainRoiScoreRepository.findPage(userId, start, end, cursorId, PageRequest.of(0, pageSize + 1))
+        val fetched = if (decoded == null) {
+            brainRoiScoreRepository.findFirstPage(userId, start, end, pageable)
+        } else {
+            brainRoiScoreRepository.findPageAfter(userId, start, end, decoded.first, decoded.second, pageable)
+        }
         val hasNext = fetched.size > pageSize
         val items = fetched.take(pageSize)
-        val nextCursor = if (hasNext) encodeCursor(items.last().id) else null
+        val nextCursor = if (hasNext) items.last().let { encodeCursor(it.measuredAt, it.id) } else null
 
         return EvaluationPageResponse(
             items = items.map { EvaluationSummaryResponse.from(it, LocalDate.ofInstant(it.measuredAt, zone)) },
@@ -168,10 +174,17 @@ class EvaluationService(
         .orElseThrow { BltException(ErrorCode.USER_NOT_FOUND) }
         .notificationTimezone
 
-    private fun encodeCursor(id: Long): String = Base64.getUrlEncoder().withoutPadding().encodeToString(id.toString().toByteArray())
+    /** 복합 커서 인코딩 — 정렬 키(measuredAt, id)와 동일. `measuredAt|id`를 base64로. */
+    private fun encodeCursor(measuredAt: Instant, id: Long): String =
+        Base64.getUrlEncoder().withoutPadding().encodeToString("$measuredAt$CURSOR_DELIMITER$id".toByteArray())
 
-    private fun decodeCursor(cursor: String?): Long? = cursor
-        ?.let { runCatching { String(Base64.getUrlDecoder().decode(it)).toLong() }.getOrNull() }
+    /** (measuredAt, id) 복합 커서 디코딩. 형식 불일치 시 null(첫 페이지로 처리). */
+    private fun decodeCursor(cursor: String?): Pair<Instant, Long>? = cursor?.let {
+        runCatching {
+            val (measuredAt, id) = String(Base64.getUrlDecoder().decode(it)).split(CURSOR_DELIMITER, limit = 2)
+            Instant.parse(measuredAt) to id.toLong()
+        }.getOrNull()
+    }
 
     private fun validatePvt(request: EvaluationCreateRequest) {
         val pvt = request.pvt
@@ -305,6 +318,7 @@ class EvaluationService(
 
     companion object {
         private const val DEFAULT_ZONE = "Asia/Seoul"
+        private const val CURSOR_DELIMITER = "|"
         private const val BASELINE_WINDOW_DAYS = 7L
         private const val MIN_PAGE_SIZE = 1
         private const val MAX_PAGE_SIZE = 100

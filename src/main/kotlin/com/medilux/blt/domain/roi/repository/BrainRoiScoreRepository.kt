@@ -27,22 +27,45 @@ interface BrainRoiScoreRepository : JpaRepository<BrainRoiScore, Long> {
     /** 전일 대비 트렌드용 — 주어진 시각 직전 측정. */
     fun findFirstByUserIdAndMeasuredAtLessThanOrderByMeasuredAtDescIdDesc(userId: Long, measuredAt: Instant): BrainRoiScore?
 
-    /** History 목록 — 기간 + id 커서(measuredAt desc, id desc). size+1로 hasNext 판별. */
+    /** History 첫 페이지(커서 없음) — measuredAt desc, id desc. size+1로 hasNext 판별. */
     @Query(
         """
         SELECT b FROM BrainRoiScore b
          WHERE b.user.id = :userId
            AND b.measuredAt >= :from
            AND b.measuredAt < :to
-           AND (:cursorId IS NULL OR b.id < :cursorId)
          ORDER BY b.measuredAt DESC, b.id DESC
         """,
     )
-    fun findPage(
+    fun findFirstPage(
         @Param("userId") userId: Long,
         @Param("from") from: Instant,
         @Param("to") to: Instant,
-        @Param("cursorId") cursorId: Long?,
+        pageable: Pageable,
+    ): List<BrainRoiScore>
+
+    /**
+     * History 다음 페이지 — 정렬 키(measuredAt desc, id desc)와 동일한 (measuredAt, id) 복합 커서.
+     */
+    @Query(
+        """
+        SELECT b FROM BrainRoiScore b
+         WHERE b.user.id = :userId
+           AND b.measuredAt >= :from
+           AND b.measuredAt < :to
+           AND (
+                b.measuredAt < :cursorMeasuredAt
+                OR (b.measuredAt = :cursorMeasuredAt AND b.id < :cursorId)
+           )
+         ORDER BY b.measuredAt DESC, b.id DESC
+        """,
+    )
+    fun findPageAfter(
+        @Param("userId") userId: Long,
+        @Param("from") from: Instant,
+        @Param("to") to: Instant,
+        @Param("cursorMeasuredAt") cursorMeasuredAt: Instant,
+        @Param("cursorId") cursorId: Long,
         pageable: Pageable,
     ): List<BrainRoiScore>
 

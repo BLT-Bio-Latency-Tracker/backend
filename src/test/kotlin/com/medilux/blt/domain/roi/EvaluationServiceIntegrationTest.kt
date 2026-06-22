@@ -210,6 +210,28 @@ class EvaluationServiceIntegrationTest {
         assertThat(second.hasNext).isFalse()
     }
 
+    @Test
+    fun `list pagination keeps all rows when measuredAt and id order diverge (composite cursor)`() {
+        val user = persistUser()
+        val now = Instant.now()
+        // 지연 업로드: id 순서(1,2,3)와 measuredAt 순서(now > now-50 > now-100)가 어긋나도록 삽입
+        evaluationService.submit(user.id, request(evaluatedAt = now)) // id1 / now
+        evaluationService.submit(user.id, request(evaluatedAt = now.minusSeconds(100))) // id2 / 가장 과거
+        evaluationService.submit(user.id, request(evaluatedAt = now.minusSeconds(50))) // id3 / 중간 (최신 id, 중간 시각)
+
+        val collected = mutableListOf<Long>()
+        var cursor: String? = null
+        do {
+            val page = evaluationService.list(user.id, null, null, cursor, 1)
+            collected += page.items.map { it.evaluationId }
+            cursor = page.nextCursor
+        } while (cursor != null)
+
+        // id 커서만 썼다면 중간 시각·최신 id 행이 누락됨 → 복합 커서로 3건 모두 수집
+        assertThat(collected).hasSize(3)
+        assertThat(collected.toSet()).hasSize(3)
+    }
+
     companion object {
         @Container
         @ServiceConnection
