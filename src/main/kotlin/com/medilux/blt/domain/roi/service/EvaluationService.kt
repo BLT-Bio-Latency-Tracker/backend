@@ -3,9 +3,14 @@ package com.medilux.blt.domain.roi.service
 import com.medilux.blt.domain.pvt.entity.PvtSession
 import com.medilux.blt.domain.pvt.repository.PvtSessionRepository
 import com.medilux.blt.domain.roi.dto.EvaluationCreateRequest
+import com.medilux.blt.domain.roi.dto.EvaluationDetailResponse
+import com.medilux.blt.domain.roi.dto.EvaluationPageResponse
 import com.medilux.blt.domain.roi.dto.EvaluationResponse
+import com.medilux.blt.domain.roi.dto.EvaluationStatsResponse
+import com.medilux.blt.domain.roi.dto.EvaluationSummaryResponse
 import com.medilux.blt.domain.roi.dto.HealthKitDataRequest
 import com.medilux.blt.domain.roi.entity.BrainRoiScore
+import com.medilux.blt.domain.roi.entity.Recommendation
 import com.medilux.blt.domain.roi.repository.BrainRoiScoreRepository
 import com.medilux.blt.domain.roi.repository.RecommendationRepository
 import com.medilux.blt.domain.sleep.entity.SleepRecord
@@ -14,10 +19,12 @@ import com.medilux.blt.domain.user.entity.User
 import com.medilux.blt.domain.user.repository.UserRepository
 import com.medilux.blt.global.exception.BltException
 import com.medilux.blt.global.exception.ErrorCode
+import org.springframework.data.domain.PageRequest
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDate
 import java.time.ZoneId
+import java.util.Base64
 
 @Service
 class EvaluationService(
@@ -77,6 +84,94 @@ class EvaluationService(
 
         return EvaluationResponse.from(score, recommendations, trend)
     }
+
+    /** 오늘 최신 1건. 없으면 null(컨트롤러에서 204). 타임존은 사용자 설정 기준. */
+    @Transactional(readOnly = true)
+    fun getToday(userId: Long): EvaluationResponse? {
+        val zone = resolveZone(userZone(userId))
+        val today = LocalDate.now(zone)
+        val start = today.atStartOfDay(zone).toInstant()
+        val end = today.plusDays(1).atStartOfDay(zone).toInstant()
+        val score = brainRoiScoreRepository
+            .findFirstByUserIdAndMeasuredAtGreaterThanEqualAndMeasuredAtLessThanOrderByMeasuredAtDescIdDesc(userId, start, end)
+            ?: return null
+        return EvaluationResponse.from(score, recommendationsOf(score), trendOf(score))
+    }
+
+    /** 상세 — 수면·PVT 카드 지표 전개. */
+    @Transactional(readOnly = true)
+    fun getDetail(userId: Long, evaluationId: Long): EvaluationDetailResponse {
+        val score = brainRoiScoreRepository.findByIdAndUserId(evaluationId, userId)
+            ?: throw BltException(ErrorCode.BRAIN_ROI_NOT_FOUND)
+        // PVT_ONLY로 생성된 최소 SleepRecord(totalMinutes=0)는 수면 카드에서 숨긴다.
+        val sleep = score.sleepRecord.takeIf { it.totalMinutes > 0 }
+        return EvaluationDetailResponse.from(score, recommendationsOf(score), trendOf(score), sleep, score.session)
+    }
+
+    /** History 목록 — 기간 + 커서. 같은 날 복수 측정도 개별 행으로 반환. */
+    @Transactional(readOnly = true)
+    fun list(userId: Long, from: LocalDate?, to: LocalDate?, cursor: String?, size: Int): EvaluationPageResponse {
+        val zone = resolveZone(userZone(userId))
+        val pageSize = size.coerceIn(MIN_PAGE_SIZE, MAX_PAGE_SIZE)
+        val today = LocalDate.now(zone)
+        val fromDate = from ?: today.withDayOfMonth(1)
+        val toDate = to ?: today
+        val start = fromDate.atStartOfDay(zone).toInstant()
+        val end = toDate.plusDays(1).atStartOfDay(zone).toInstant()
+        val cursorId = decodeCursor(cursor)
+
+        val fetched = brainRoiScoreRepository.findPage(userId, start, end, cursorId, PageRequest.of(0, pageSize + 1))
+        val hasNext = fetched.size > pageSize
+        val items = fetched.take(pageSize)
+        val nextCursor = if (hasNext) encodeCursor(items.last().id) else null
+
+        return EvaluationPageResponse(
+            items = items.map { EvaluationSummaryResponse.from(it, LocalDate.ofInstant(it.measuredAt, zone)) },
+            nextCursor = nextCursor,
+            hasNext = hasNext,
+        )
+    }
+
+    /** 통계 — 측정 일수/평균/최고/최저 ROI. */
+    @Transactional(readOnly = true)
+    fun stats(userId: Long, period: String, from: LocalDate?, to: LocalDate?): EvaluationStatsResponse {
+        val zone = resolveZone(userZone(userId))
+        val today = LocalDate.now(zone)
+        val fromDate = from ?: today.withDayOfMonth(1)
+        val toDate = to ?: today
+        val start = fromDate.atStartOfDay(zone).toInstant()
+        val end = toDate.plusDays(1).atStartOfDay(zone).toInstant()
+
+        val rows = brainRoiScoreRepository.findScoresInRange(userId, start, end)
+        val measuredDays = rows.map { LocalDate.ofInstant(it.measuredAt, zone) }.distinct().size
+        val scores = rows.map { it.finalScore }
+
+        return EvaluationStatsResponse(
+            period = period,
+            from = fromDate,
+            to = toDate,
+            measuredDays = measuredDays,
+            avgRoi = scores.average().takeIf { scores.isNotEmpty() }?.let(Math::round)?.toInt(),
+            maxRoi = scores.maxOrNull(),
+            minRoi = scores.minOrNull(),
+        )
+    }
+
+    private fun recommendationsOf(score: BrainRoiScore): List<Recommendation> =
+        recommendationRepository.findByRoiScoreIdOrderByIdAsc(score.id)
+
+    private fun trendOf(score: BrainRoiScore): Int? = brainRoiScoreRepository
+        .findFirstByUserIdAndMeasuredAtLessThanOrderByMeasuredAtDescIdDesc(score.user.id, score.measuredAt)
+        ?.let { score.finalScore - it.finalScore }
+
+    private fun userZone(userId: Long): String = userRepository.findById(userId)
+        .orElseThrow { BltException(ErrorCode.USER_NOT_FOUND) }
+        .notificationTimezone
+
+    private fun encodeCursor(id: Long): String = Base64.getUrlEncoder().withoutPadding().encodeToString(id.toString().toByteArray())
+
+    private fun decodeCursor(cursor: String?): Long? = cursor
+        ?.let { runCatching { String(Base64.getUrlDecoder().decode(it)).toLong() }.getOrNull() }
 
     private fun validatePvt(request: EvaluationCreateRequest) {
         val pvt = request.pvt
@@ -211,5 +306,7 @@ class EvaluationService(
     companion object {
         private const val DEFAULT_ZONE = "Asia/Seoul"
         private const val BASELINE_WINDOW_DAYS = 7L
+        private const val MIN_PAGE_SIZE = 1
+        private const val MAX_PAGE_SIZE = 100
     }
 }

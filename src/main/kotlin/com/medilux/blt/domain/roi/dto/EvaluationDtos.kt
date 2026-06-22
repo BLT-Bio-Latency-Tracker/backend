@@ -1,14 +1,17 @@
 package com.medilux.blt.domain.roi.dto
 
+import com.medilux.blt.domain.pvt.entity.PvtSession
 import com.medilux.blt.domain.roi.entity.BrainRoiScore
 import com.medilux.blt.domain.roi.entity.CalculationScenario
 import com.medilux.blt.domain.roi.entity.Recommendation
 import com.medilux.blt.domain.roi.entity.RoiQuadrant
 import com.medilux.blt.domain.sleep.entity.SleepDataCompleteness
+import com.medilux.blt.domain.sleep.entity.SleepRecord
 import io.swagger.v3.oas.annotations.media.Schema
 import java.time.Instant
 import java.time.LocalDate
 import java.util.UUID
+import kotlin.math.roundToInt
 
 // ---------------------------------------------------------------------------
 // Request
@@ -129,3 +132,133 @@ object RoiStatusLabel {
         else -> "회복 필요"
     }
 }
+
+// ---------------------------------------------------------------------------
+// Response — 상세 (수면 카드 / PVT 카드 파생 지표)
+// ---------------------------------------------------------------------------
+
+@Schema(description = "ROI 평가 상세 (수면·PVT 카드 포함)")
+data class EvaluationDetailResponse(val evaluation: EvaluationResponse, val sleep: SleepDetail?, val pvt: PvtDetail) {
+    companion object {
+        fun from(
+            score: BrainRoiScore,
+            recommendations: List<Recommendation>,
+            trendVsYesterday: Int?,
+            sleep: SleepRecord?,
+            pvt: PvtSession,
+        ): EvaluationDetailResponse = EvaluationDetailResponse(
+            evaluation = EvaluationResponse.from(score, recommendations, trendVsYesterday),
+            sleep = sleep?.let(SleepDetail::from),
+            pvt = PvtDetail.from(pvt),
+        )
+    }
+}
+
+@Schema(description = "수면 상세 지표 (일부는 파생 계산)")
+data class SleepDetail(
+    val sleepDate: LocalDate,
+    val totalMinutes: Int,
+    val deepMinutes: Int?,
+    val remMinutes: Int?,
+    val coreMinutes: Int?,
+    val awakeMinutes: Int?,
+    val inBedMinutes: Int?,
+    val efficiencyPercent: Int?,
+    val deepRatioPercent: Int?,
+    val remRatioPercent: Int?,
+    val lightRatioPercent: Int?,
+    val dataCompleteness: SleepDataCompleteness?,
+) {
+    companion object {
+        fun from(s: SleepRecord): SleepDetail {
+            fun ratio(part: Int?): Int? =
+                if (part != null && s.totalMinutes > 0) (part.toDouble() / s.totalMinutes * 100).roundToInt() else null
+
+            val efficiency = s.inBedMinutes
+                ?.takeIf { it > 0 }
+                ?.let { (s.totalMinutes.toDouble() / it * 100).roundToInt() }
+            return SleepDetail(
+                sleepDate = s.sleepDate,
+                totalMinutes = s.totalMinutes,
+                deepMinutes = s.deepMinutes,
+                remMinutes = s.remMinutes,
+                coreMinutes = s.coreMinutes,
+                awakeMinutes = s.awakeMinutes,
+                inBedMinutes = s.inBedMinutes,
+                efficiencyPercent = efficiency,
+                deepRatioPercent = ratio(s.deepMinutes),
+                remRatioPercent = ratio(s.remMinutes),
+                lightRatioPercent = ratio(s.coreMinutes),
+                dataCompleteness = s.dataCompleteness,
+            )
+        }
+    }
+}
+
+@Schema(description = "PVT 상세 지표 (일부는 파생 계산)")
+data class PvtDetail(
+    val measurementId: UUID,
+    val avgRtMs: Double,
+    val bestRtMs: Int?,
+    val medianRtMs: Double?,
+    val lapsesMild: Int,
+    val lapsesTimeout: Int,
+    val falseStarts: Int,
+    val totalCount: Int,
+    val rawRtMs: List<Int>,
+    val isValid: Boolean,
+) {
+    companion object {
+        fun from(p: PvtSession): PvtDetail = PvtDetail(
+            measurementId = p.measurementId,
+            avgRtMs = p.avgRtMs,
+            bestRtMs = p.rawRtMs.minOrNull(),
+            medianRtMs = p.medianRtMs,
+            lapsesMild = p.lapsesMild,
+            lapsesTimeout = p.lapsesTimeout,
+            falseStarts = p.falseStarts,
+            totalCount = p.totalCount,
+            rawRtMs = p.rawRtMs,
+            isValid = p.isValid,
+        )
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Response — 목록(History) / 통계
+// ---------------------------------------------------------------------------
+
+@Schema(description = "History 캘린더 셀용 경량 요약")
+data class EvaluationSummaryResponse(
+    val evaluationId: Long,
+    val date: LocalDate,
+    val measuredAt: Instant,
+    val finalScore: Int,
+    val statusLabel: String,
+    val quadrant: RoiQuadrant,
+) {
+    companion object {
+        fun from(score: BrainRoiScore, date: LocalDate): EvaluationSummaryResponse = EvaluationSummaryResponse(
+            evaluationId = score.id,
+            date = date,
+            measuredAt = score.measuredAt,
+            finalScore = score.finalScore,
+            statusLabel = RoiStatusLabel.of(score.finalScore),
+            quadrant = score.quadrant,
+        )
+    }
+}
+
+@Schema(description = "ROI 평가 목록 (커서 페이지네이션)")
+data class EvaluationPageResponse(val items: List<EvaluationSummaryResponse>, val nextCursor: String?, val hasNext: Boolean)
+
+@Schema(description = "ROI 평가 통계")
+data class EvaluationStatsResponse(
+    val period: String,
+    val from: LocalDate,
+    val to: LocalDate,
+    val measuredDays: Int,
+    val avgRoi: Int?,
+    val maxRoi: Int?,
+    val minRoi: Int?,
+)

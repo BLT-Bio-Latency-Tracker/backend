@@ -7,6 +7,8 @@ import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.query.Param
 
 interface RecommendationRepository : JpaRepository<Recommendation, Long> {
+    fun findByRoiScoreIdOrderByIdAsc(roiScoreId: Long): List<Recommendation>
+
     @Modifying
     @Query(
         """
