@@ -87,6 +87,25 @@ class BrainRoiCalculatorTest {
     }
 
     @Test
+    fun `scenario C when TST estimated from inBed even if stages present`() {
+        // totalMinutes 결측 → inBed로 TST 추정. 단계는 실측이지만 결측 보정이 있었으므로 C.
+        val result = calculator.calculate(
+            avgRtMs = 312.0,
+            sleepDataPresent = true,
+            sleepInput = SleepScoreInput(
+                totalMinutes = null,
+                deepMinutes = 72,
+                remMinutes = 88,
+                nightHrvMs = 45.2,
+                weeklyHrvBaselineMs = 48.1,
+                inBedMinutes = 480,
+            ),
+        )
+        assertThat(result.scenario).isEqualTo(CalculationScenario.C)
+        assertThat(result.breakdown["tstEstimatedFromInBed"]).isEqualTo(true)
+    }
+
+    @Test
     fun `quadrant boundary is 65 inclusive on each axis`() {
         // Slow PVT (avg 450 -> 36) keeps PVT low; full sleep stays high
         val result = calculator.calculate(avgRtMs = 450.0, sleepDataPresent = true, sleepInput = fullSleep())

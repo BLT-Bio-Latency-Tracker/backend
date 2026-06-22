@@ -48,10 +48,14 @@ class BrainRoiCalculator(private val pvtScoreCalculator: PvtScoreCalculator, pri
     private fun resolveScenario(sleepDataPresent: Boolean, sleep: SleepScoreResult): CalculationScenario = when {
         !sleepDataPresent -> CalculationScenario.D
 
+        // 수면 데이터는 왔으나 산출 불가(케이스 5 등)
         sleep.score == null -> CalculationScenario.C
 
-        // 수면 데이터는 왔으나 산출 불가(케이스 5 등)
-        sleep.deepEstimated || sleep.remEstimated -> CalculationScenario.C
+        // 결측 보정(단계 추정 또는 TST 추정[inBed·baseline])은 모두 C로 일관 분류
+        sleep.deepEstimated ||
+            sleep.remEstimated ||
+            sleep.tstEstimatedFromInBed ||
+            sleep.tstEstimatedFromBaseline -> CalculationScenario.C
 
         sleep.hrvMissing -> CalculationScenario.B
 
@@ -82,8 +86,11 @@ class BrainRoiCalculator(private val pvtScoreCalculator: PvtScoreCalculator, pri
         "resolvedTstMinutes" to sleep.resolvedTst?.roundToInt(),
         "sleepMissing" to (sleepScore == null),
         "tstEstimatedFromInBed" to sleep.tstEstimatedFromInBed,
+        "tstEstimatedFromBaseline" to sleep.tstEstimatedFromBaseline,
         "deepEstimated" to sleep.deepEstimated,
+        "deepFromBaseline" to sleep.deepFromBaseline,
         "remEstimated" to sleep.remEstimated,
+        "remFromBaseline" to sleep.remFromBaseline,
         "hrvMissing" to sleep.hrvMissing,
         "fixedLowSleep" to sleep.fixedLowSleep,
     )
