@@ -15,6 +15,7 @@ import jakarta.persistence.Index
 import jakarta.persistence.JoinColumn
 import jakarta.persistence.ManyToOne
 import jakarta.persistence.Table
+import org.hibernate.annotations.ColumnTransformer
 import org.hibernate.annotations.SQLRestriction
 import java.time.Instant
 
@@ -41,6 +42,7 @@ class ConsentLog(
     @Column(name = "agreed_at", nullable = false, updatable = false)
     val agreedAt: Instant,
     @Column(name = "client_ip", columnDefinition = "inet", updatable = false)
+    @ColumnTransformer(write = "?::inet")
     val clientIp: String? = null,
 ) : BaseEntity() {
     @Id
