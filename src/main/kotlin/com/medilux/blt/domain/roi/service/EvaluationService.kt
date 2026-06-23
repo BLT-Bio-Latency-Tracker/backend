@@ -27,6 +27,27 @@ import java.time.LocalDate
 import java.time.ZoneId
 import java.util.Base64
 
+/** 통계 기간 단위 — 기본 조회 범위(from)를 결정. 알 수 없는 값은 MONTH로 폴백. */
+enum class StatsPeriod {
+    WEEK,
+    MONTH,
+    YEAR,
+    ;
+
+    /** to(today) 기준 기본 시작일. week=최근 7일, month=당월 1일, year=올해 1/1. */
+    fun defaultFrom(today: LocalDate): LocalDate = when (this) {
+        WEEK -> today.minusDays(6)
+        MONTH -> today.withDayOfMonth(1)
+        YEAR -> today.withDayOfYear(1)
+    }
+
+    val label: String get() = name.lowercase()
+
+    companion object {
+        fun from(raw: String): StatsPeriod = entries.firstOrNull { it.name.equals(raw, ignoreCase = true) } ?: MONTH
+    }
+}
+
 @Service
 class EvaluationService(
     private val userRepository: UserRepository,
@@ -138,12 +159,14 @@ class EvaluationService(
         )
     }
 
-    /** 통계 — 측정 일수/평균/최고/최저 ROI. */
+    /** 통계 — 측정 일수/평균/최고/최저 ROI. period(week/month/year)가 기본 조회 범위를 결정. */
     @Transactional(readOnly = true)
     fun stats(userId: Long, period: String, from: LocalDate?, to: LocalDate?): EvaluationStatsResponse {
         val zone = resolveZone(userZone(userId))
         val today = LocalDate.now(zone)
-        val fromDate = from ?: today.withDayOfMonth(1)
+        val statsPeriod = StatsPeriod.from(period)
+        // 명시적 from/to가 오면 우선, 없으면 period 기준 기본 범위.
+        val fromDate = from ?: statsPeriod.defaultFrom(today)
         val toDate = to ?: today
         val start = fromDate.atStartOfDay(zone).toInstant()
         val end = toDate.plusDays(1).atStartOfDay(zone).toInstant()
@@ -153,7 +176,7 @@ class EvaluationService(
         val scores = rows.map { it.finalScore }
 
         return EvaluationStatsResponse(
-            period = period,
+            period = statsPeriod.label,
             from = fromDate,
             to = toDate,
             measuredDays = measuredDays,
@@ -217,8 +240,11 @@ class EvaluationService(
                 existing.applyHealthKit(hk)
                 existing to true
             }
+
             hk != null -> sleepRecordRepository.save(hk.toSleepRecord(user)) to true
+
             existing != null -> existing to true
+
             else -> sleepRecordRepository.save(minimalSleepRecord(user, sleepDate)) to false
         }
     }
