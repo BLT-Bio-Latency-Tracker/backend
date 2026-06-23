@@ -232,6 +232,36 @@ class EvaluationServiceIntegrationTest {
         assertThat(collected.toSet()).hasSize(3)
     }
 
+    @Test
+    fun `stats normalizes period and reflects week range`() {
+        val user = persistUser()
+        evaluationService.submit(user.id, request()) // 오늘 측정 1건
+
+        val week = evaluationService.stats(user.id, "WEEK", null, null)
+        assertThat(week.period).isEqualTo("week") // 정규화(소문자)
+        assertThat(week.from).isEqualTo(LocalDate.now().minusDays(6)) // 최근 7일
+        assertThat(week.measuredDays).isEqualTo(1)
+
+        // 알 수 없는 period → month 폴백
+        val fallback = evaluationService.stats(user.id, "bogus", null, null)
+        assertThat(fallback.period).isEqualTo("month")
+        assertThat(fallback.from).isEqualTo(LocalDate.now().withDayOfMonth(1))
+    }
+
+    @Test
+    fun `stats week range excludes measurement older than 7 days`() {
+        val user = persistUser()
+        val twentyDaysAgo = Instant.now().minus(20, ChronoUnit.DAYS)
+        evaluationService.submit(
+            user.id,
+            request(evaluatedAt = twentyDaysAgo, healthKitData = healthKit(LocalDate.now().minusDays(20))),
+        )
+        evaluationService.submit(user.id, request()) // 오늘
+
+        val week = evaluationService.stats(user.id, "week", null, null)
+        assertThat(week.measuredDays).isEqualTo(1) // 20일 전 측정은 최근 7일 범위 밖
+    }
+
     companion object {
         @Container
         @ServiceConnection
