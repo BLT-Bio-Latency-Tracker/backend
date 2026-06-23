@@ -5,9 +5,11 @@ import com.medilux.blt.domain.auth.security.AuthUserPrincipal
 import com.medilux.blt.domain.user.dto.OnboardingRequest
 import com.medilux.blt.domain.user.dto.OnboardingResponse
 import com.medilux.blt.domain.user.dto.ProfileUpdateRequest
+import com.medilux.blt.domain.user.dto.TermsHistoryItemResponse
 import com.medilux.blt.domain.user.dto.UserResponse
 import com.medilux.blt.domain.user.dto.WithdrawResponse
 import com.medilux.blt.domain.user.entity.UserStatus
+import com.medilux.blt.domain.user.repository.ConsentLogRepository
 import com.medilux.blt.domain.user.repository.UserDeviceRepository
 import com.medilux.blt.domain.user.repository.UserRepository
 import com.medilux.blt.global.exception.BltException
@@ -23,7 +25,13 @@ class UserService(
     private val userRepository: UserRepository,
     private val refreshTokenRepository: RefreshTokenRepository,
     private val userDeviceRepository: UserDeviceRepository,
+    private val consentLogRepository: ConsentLogRepository,
 ) {
+    /** 약관 동의 이력 조회 — append-only 전체 이력을 최신순으로 반환. */
+    @Transactional(readOnly = true)
+    fun getTermsHistory(userId: Long): List<TermsHistoryItemResponse> = consentLogRepository.findByUserIdOrderByAgreedAtDescIdDesc(userId)
+        .map(TermsHistoryItemResponse::from)
+
     @Transactional
     fun completeOnboarding(principal: AuthUserPrincipal?, request: OnboardingRequest): OnboardingResponse {
         val userId = principal?.userId ?: throw BltException(ErrorCode.AUTH_INVALID_CREDENTIALS)

@@ -7,6 +7,9 @@ import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.query.Param
 
 interface ConsentLogRepository : JpaRepository<ConsentLog, Long> {
+    /** 약관 동의 이력(append-only) 최신순 — 같은 항목이 버전별로 여러 row일 수 있음. */
+    fun findByUserIdOrderByAgreedAtDescIdDesc(userId: Long): List<ConsentLog>
+
     @Modifying
     @Query(
         """

@@ -4,6 +4,7 @@ import com.medilux.blt.domain.auth.security.AuthUserPrincipal
 import com.medilux.blt.domain.user.dto.OnboardingRequest
 import com.medilux.blt.domain.user.dto.OnboardingResponse
 import com.medilux.blt.domain.user.dto.ProfileUpdateRequest
+import com.medilux.blt.domain.user.dto.TermsHistoryItemResponse
 import com.medilux.blt.domain.user.dto.UserResponse
 import com.medilux.blt.domain.user.dto.WithdrawResponse
 import com.medilux.blt.domain.user.service.UserService
@@ -41,6 +42,11 @@ class UserController(private val userService: UserService) {
         @AuthenticationPrincipal principal: AuthUserPrincipal?,
         @Valid @RequestBody request: ProfileUpdateRequest,
     ): UserResponse = userService.updateProfile(requireUserId(principal), request)
+
+    @Operation(summary = "약관 동의 이력 조회")
+    @GetMapping("/me/terms/history")
+    fun getTermsHistory(@AuthenticationPrincipal principal: AuthUserPrincipal?): List<TermsHistoryItemResponse> =
+        userService.getTermsHistory(requireUserId(principal))
 
     @Operation(summary = "내 계정 탈퇴 (유예기간 30일)")
     @DeleteMapping("/me")
