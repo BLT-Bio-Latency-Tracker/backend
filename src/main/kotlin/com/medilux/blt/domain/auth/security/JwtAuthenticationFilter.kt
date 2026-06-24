@@ -26,7 +26,9 @@ class JwtAuthenticationFilter(
             path == "/v3/api-docs" ||
             path.startsWith("/v3/api-docs/") ||
             path.startsWith("/swagger-ui/") ||
-            path == "/swagger-ui.html"
+            path == "/swagger-ui.html" ||
+            path == "/actuator/health" ||
+            path.startsWith("/actuator/health/")
     }
 
     override fun doFilterInternal(request: HttpServletRequest, response: HttpServletResponse, filterChain: FilterChain) {
