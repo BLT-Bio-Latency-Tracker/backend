@@ -65,6 +65,11 @@ tasks.withType<Test> {
     useJUnitPlatform()
 }
 
+// bootJar만 산출(plain jar 비활성).
+tasks.named("jar") {
+    enabled = false
+}
+
 ktlint {
     version.set("1.3.1")
     android.set(false)
