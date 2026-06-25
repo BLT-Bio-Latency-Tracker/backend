@@ -1,22 +1,51 @@
+# prod 배포용 compose — EC2에서 SSM Run Command가 infra/deploy.sh를 통해 실행.
+#
+# 이 .env는 deploy.sh가 SSM Parameter Store(/blt/prod/*)에서 생성하며 레포에 커밋하지 않는다.
+#   - compose 보간용: ECR_IMAGE, IMAGE_TAG, ORIGIN_SECRET
+#   - app 주입용(env_file): DB_*, JWT_*, APPLE_*, SENTRY_DSN, CORS_*, FCM_* 등
 services:
-  postgres:
-    image: postgres:16
-    container_name: blt-postgres-prod
-    ports:
-      - "${POSTGRES_PORT:-5432}:5432"
-    environment:
-      POSTGRES_DB: ${POSTGRES_DB}
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      TZ: Asia/Seoul
-    volumes:
-      - blt-postgres-prod-data:/var/lib/postgresql/data
+  app:
+    image: ${ECR_IMAGE}:${IMAGE_TAG}
+    container_name: blt-app-prod
     restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      FCM_CREDENTIALS_PATH: /secrets/blt-firebase-adminsdk.json
+    volumes:
+      # deploy.sh가 SSM의 fcm-credentials-json을 이 파일로 써둔다.
+      - ./secrets/fcm.json:/secrets/blt-firebase-adminsdk.json:ro
+    expose:
+      - "8080"   # 호스트로 노출하지 않음 — nginx만 접근
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
-      interval: 10s
-      timeout: 5s
+      test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/127.0.0.1/8080"]
+      interval: 15s
+      timeout: 3s
       retries: 5
+      start_period: 60s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
 
-volumes:
-  blt-postgres-prod-data:
+  nginx:
+    image: nginx:1.27-alpine
+    container_name: blt-nginx-prod
+    restart: unless-stopped
+    depends_on:
+      app:
+        condition: service_healthy
+    ports:
+      - "80:80"   # SG inbound 80 = CloudFront origin-facing prefix list만 허용
+    environment:
+      ORIGIN_SECRET: ${ORIGIN_SECRET}
+      NGINX_ENVSUBST_FILTER: ORIGIN_SECRET
+    volumes:
+      - ./infra/nginx/nginx.conf.template:/etc/nginx/templates/default.conf.template:ro
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
