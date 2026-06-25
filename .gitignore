@@ -49,4 +49,7 @@ out/
 .DS_Store
 
 ### docs ###
-/docs/
+/docs/backend
+/docs/frontend
+/docs/infra
+/docs/planning
