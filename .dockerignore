@@ -1,0 +1,21 @@
+# 빌드 산출물·로컬 도구
+build/
+.gradle/
+.kotlin/
+
+# VCS·IDE
+.git/
+.gitignore
+.idea/
+*.iml
+
+# 시크릿(절대 이미지에 포함 금지)
+secrets/
+
+# 문서·테스트(런타임 이미지 불필요; 테스트는 CI에서)
+docs/
+src/test/
+*.md
+
+# OS/기타
+.DS_Store

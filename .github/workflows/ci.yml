@@ -1,0 +1,30 @@
+name: CI
+
+# PR 검증: ktlint + 테스트(Testcontainers Postgres) + bootJar 빌드.
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: build & test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: gradle
+
+      - name: Gradle build (ktlint + test + bootJar)
+        run: |
+          chmod +x ./gradlew
+          ./gradlew --no-daemon build
