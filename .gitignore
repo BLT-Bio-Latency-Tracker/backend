@@ -42,6 +42,7 @@ out/
 ### env ###
 .env
 .env.*
+app.env
 /secrets/
 *.p8
 
@@ -49,4 +50,7 @@ out/
 .DS_Store
 
 ### docs ###
-/docs/
+/docs/backend
+/docs/frontend
+/docs/infra
+/docs/planning

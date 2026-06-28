@@ -17,8 +17,30 @@ spring:
       hibernate:
         format_sql: false
 
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+
 server:
   port: ${SERVER_PORT:8080}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      show-details: never
+      probes:
+        enabled: true
+
+# Sentry
+sentry:
+  dsn: ${SENTRY_DSN:}
+  environment: ${SPRING_PROFILES_ACTIVE:local}
+  traces-sample-rate: 0.0
+  send-default-pii: false
 
 springdoc:
   swagger-ui:

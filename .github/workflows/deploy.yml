@@ -1,0 +1,103 @@
+name: Deploy (prod)
+
+# main 푸시 → 테스트 게이트 → OIDC → ECR push(sha+latest) → SSM SendCommand로 EC2 배포.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-prod          # 배포 겹침 방지(직렬화)
+  cancel-in-progress: false
+
+permissions:
+  id-token: write   # OIDC 토큰 발급(장기 키 없음)
+  contents: read
+
+jobs:
+  test:
+    name: test gate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: gradle
+      - name: Gradle build (ktlint + test + bootJar)
+        run: |
+          chmod +x ./gradlew
+          ./gradlew --no-daemon build
+
+  deploy:
+    name: build image → push → deploy
+    needs: test
+    runs-on: ubuntu-latest
+    env:
+      AWS_REGION: ${{ vars.AWS_REGION }}
+      ECR_REPOSITORY: ${{ vars.ECR_REPOSITORY }}
+      EC2_INSTANCE_ID: ${{ vars.EC2_INSTANCE_ID }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build & push image (sha + latest)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: |
+            ${{ env.ECR_REPOSITORY }}:${{ github.sha }}
+            ${{ env.ECR_REPOSITORY }}:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Deploy via SSM Run Command
+        run: |
+          set -euo pipefail
+          CMD="cd /opt/blt && git fetch --all --quiet && git checkout --quiet ${GITHUB_SHA} \
+            && IMAGE_TAG=${GITHUB_SHA} ECR_IMAGE=${ECR_REPOSITORY} bash infra/deploy.sh"
+
+          CMD_ID=$(aws ssm send-command \
+            --region "$AWS_REGION" \
+            --instance-ids "$EC2_INSTANCE_ID" \
+            --document-name "AWS-RunShellScript" \
+            --comment "deploy ${GITHUB_SHA::7}" \
+            --timeout-seconds 600 \
+            --parameters commands="$CMD" \
+            --query 'Command.CommandId' --output text)
+          echo "SSM command: $CMD_ID"
+
+          # 완료 대기(실패/타임아웃이면 waiter가 non-zero → 아래서 상태 단언)
+          aws ssm wait command-executed \
+            --region "$AWS_REGION" --command-id "$CMD_ID" --instance-id "$EC2_INSTANCE_ID" || true
+
+          STATUS=$(aws ssm get-command-invocation \
+            --region "$AWS_REGION" --command-id "$CMD_ID" --instance-id "$EC2_INSTANCE_ID" \
+            --query 'Status' --output text)
+
+          echo "::group::deploy.sh stdout"
+          aws ssm get-command-invocation --region "$AWS_REGION" \
+            --command-id "$CMD_ID" --instance-id "$EC2_INSTANCE_ID" \
+            --query 'StandardOutputContent' --output text || true
+          echo "::endgroup::"
+          echo "::group::deploy.sh stderr"
+          aws ssm get-command-invocation --region "$AWS_REGION" \
+            --command-id "$CMD_ID" --instance-id "$EC2_INSTANCE_ID" \
+            --query 'StandardErrorContent' --output text || true
+          echo "::endgroup::"
+
+          echo "deploy status: $STATUS"
+          [ "$STATUS" = "Success" ]
