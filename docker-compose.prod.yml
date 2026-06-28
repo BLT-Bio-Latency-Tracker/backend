@@ -1,15 +1,16 @@
 # prod 배포용 compose — EC2에서 SSM Run Command가 infra/deploy.sh를 통해 실행.
 #
-# 이 .env는 deploy.sh가 SSM Parameter Store(/blt/prod/*)에서 생성하며 레포에 커밋하지 않는다.
-#   - compose 보간용: ECR_IMAGE, IMAGE_TAG, ORIGIN_SECRET
-#   - app 주입용(env_file): DB_*, JWT_*, APPLE_*, SENTRY_DSN, CORS_*, FCM_* 등
+# deploy.sh가 SSM Parameter Store(/blt/prod/*)에서 아래 두 파일을 생성하며 레포에 커밋하지 않는다.
+#   - .env    : compose 보간 + nginx 전용 (ECR_IMAGE, IMAGE_TAG, ORIGIN_SECRET)
+#   - app.env : app 런타임 주입            (DB_*, JWT_*, APPLE_*, SENTRY_DSN, CORS_*, FCM_* 등)
+#   ORIGIN_SECRET·ECR_IMAGE·IMAGE_TAG는 app이 쓰지 않으므로 app.env에서 제외(최소 권한).
 services:
   app:
     image: ${ECR_IMAGE}:${IMAGE_TAG}
     container_name: blt-app-prod
     restart: unless-stopped
     env_file:
-      - .env
+      - app.env
     environment:
       SPRING_PROFILES_ACTIVE: prod
       FCM_CREDENTIALS_PATH: /secrets/blt-firebase-adminsdk.json

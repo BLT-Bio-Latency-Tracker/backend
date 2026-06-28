@@ -6,7 +6,7 @@
 # 권장 SendCommand: cd /opt/blt && git fetch --all && git checkout <sha> \
 #                     && IMAGE_TAG=<sha> ECR_IMAGE=<repo-uri> bash infra/deploy.sh
 #
-# 동작: SSM(/blt/prod/*) → .env 생성 → FCM json 파일화 → ECR 로그인
+# 동작: SSM(/blt/prod/*) → .env(보간/nginx) + app.env(런타임) 생성 → FCM json 파일화 → ECR 로그인
 #       → compose pull & up → /actuator/health 게이트 → 실패 시 이전 이미지로 자동 롤백.
 set -euo pipefail
 
@@ -29,21 +29,26 @@ log "deploy ${ECR_IMAGE}:${IMAGE_TAG} (prev=${PREV_TAG:-none})"
 
 ### 1. SSM → .env 생성 (시크릿 회전 반영 위해 매 배포 재생성) -----------------
 log "fetch secrets: SSM ${SSM_PREFIX}"
-TMP_ENV="$(mktemp)"
-# /blt/prod/db-url → DB_URL 형태로 변환. FCM json은 .env가 아닌 파일로 별도 처리.
+TMP_INFRA="$(mktemp)"   # .env    → compose 보간 + nginx 전용
+TMP_APP="$(mktemp)"     # app.env → app 컨테이너 런타임 주입
+# /blt/prod/db-url → DB_URL 형태로 변환. 라우팅:
+#   ORIGIN_SECRET → .env(nginx/보간) / 그 외 → app.env(런타임) / FCM json → 파일(아래)
 aws ssm get-parameters-by-path \
     --path "$SSM_PREFIX" --recursive --with-decryption \
     --region "$AWS_REGION" \
     --query 'Parameters[].[Name,Value]' --output text \
 | while IFS=$'\t' read -r name value; do
     key="$(basename "$name" | tr '[:lower:]-' '[:upper:]_')"
-    [[ "$key" == "FCM_CREDENTIALS_JSON" ]] && continue
-    printf '%s=%s\n' "$key" "$value" >> "$TMP_ENV"
+    case "$key" in
+      FCM_CREDENTIALS_JSON) continue ;;
+      ORIGIN_SECRET) printf '%s=%s\n' "$key" "$value" >> "$TMP_INFRA" ;;
+      *)             printf '%s=%s\n' "$key" "$value" >> "$TMP_APP" ;;
+    esac
   done
-# 배포 메타(compose 보간용)
-{ printf 'IMAGE_TAG=%s\n' "$IMAGE_TAG"; printf 'ECR_IMAGE=%s\n' "$ECR_IMAGE"; } >> "$TMP_ENV"
-mv "$TMP_ENV" .env
-chmod 600 .env
+# 배포 메타(compose 보간용)는 .env 로
+{ printf 'IMAGE_TAG=%s\n' "$IMAGE_TAG"; printf 'ECR_IMAGE=%s\n' "$ECR_IMAGE"; } >> "$TMP_INFRA"
+mv "$TMP_INFRA" .env     && chmod 600 .env
+mv "$TMP_APP"   app.env  && chmod 600 app.env
 
 ### 2. FCM 자격증명 파일화 (compose가 컨테이너에 마운트) ----------------------
 mkdir -p secrets
