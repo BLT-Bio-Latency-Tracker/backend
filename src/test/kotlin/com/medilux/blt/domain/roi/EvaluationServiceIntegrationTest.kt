@@ -29,6 +29,7 @@ import org.testcontainers.junit.jupiter.Container
 import org.testcontainers.junit.jupiter.Testcontainers
 import java.time.Instant
 import java.time.LocalDate
+import java.time.ZoneId
 import java.time.temporal.ChronoUnit
 import java.util.UUID
 
@@ -237,15 +238,18 @@ class EvaluationServiceIntegrationTest {
         val user = persistUser()
         evaluationService.submit(user.id, request()) // 오늘 측정 1건
 
+        // 서비스는 사용자 notificationTimezone(기본 Asia/Seoul) 기준으로 날짜를 계산하므로
+        // 기대값도 같은 존으로 산출해야 한다(시스템 기본 존이 UTC인 CI에서 날짜 경계 불일치 방지).
+        val seoulToday = LocalDate.now(ZoneId.of("Asia/Seoul"))
         val week = evaluationService.stats(user.id, "WEEK", null, null)
         assertThat(week.period).isEqualTo("week") // 정규화(소문자)
-        assertThat(week.from).isEqualTo(LocalDate.now().minusDays(6)) // 최근 7일
+        assertThat(week.from).isEqualTo(seoulToday.minusDays(6)) // 최근 7일
         assertThat(week.measuredDays).isEqualTo(1)
 
         // 알 수 없는 period → month 폴백
         val fallback = evaluationService.stats(user.id, "bogus", null, null)
         assertThat(fallback.period).isEqualTo("month")
-        assertThat(fallback.from).isEqualTo(LocalDate.now().withDayOfMonth(1))
+        assertThat(fallback.from).isEqualTo(seoulToday.withDayOfMonth(1))
     }
 
     @Test
