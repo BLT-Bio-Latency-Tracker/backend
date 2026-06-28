@@ -31,16 +31,20 @@ log "deploy ${ECR_IMAGE}:${IMAGE_TAG} (prev=${PREV_TAG:-none})"
 log "fetch secrets: SSM ${SSM_PREFIX}"
 TMP_INFRA="$(mktemp)"   # .env    → compose 보간 + nginx 전용
 TMP_APP="$(mktemp)"     # app.env → app 컨테이너 런타임 주입
-# /blt/prod/db-url → DB_URL 형태로 변환. 라우팅:
-#   ORIGIN_SECRET → .env(nginx/보간) / 그 외 → app.env(런타임) / FCM json → 파일(아래)
-aws ssm get-parameters-by-path \
-    --path "$SSM_PREFIX" --recursive --with-decryption \
-    --region "$AWS_REGION" \
-    --query 'Parameters[].[Name,Value]' --output text \
-| while IFS=$'\t' read -r name value; do
+# 라우팅: ORIGIN_SECRET → .env(nginx/보간) / 그 외 → app.env(런타임) / FCM json → 파일
+# 멀티라인 값은 env_file에 담을 수 없으므로 거부(FCM·apple-private-key처럼 파일 처리 대상).
+NAMES="$(aws ssm get-parameters-by-path --path "$SSM_PREFIX" --recursive \
+           --region "$AWS_REGION" --query 'Parameters[].Name' --output text)"
+for name in $NAMES; do
     key="$(basename "$name" | tr '[:lower:]-' '[:upper:]_')"
+    [[ "$key" == "FCM_CREDENTIALS_JSON" ]] && continue          # 파일로 별도 처리
+    value="$(aws ssm get-parameter --name "$name" --with-decryption \
+               --region "$AWS_REGION" --query 'Parameter.Value' --output text)"
+    if [[ "$value" == *$'\n'* ]]; then
+      log "⚠️ skip ${key}: 멀티라인 값 — env_file 불가, 파일 처리 필요"
+      continue
+    fi
     case "$key" in
-      FCM_CREDENTIALS_JSON) continue ;;
       ORIGIN_SECRET) printf '%s=%s\n' "$key" "$value" >> "$TMP_INFRA" ;;
       *)             printf '%s=%s\n' "$key" "$value" >> "$TMP_APP" ;;
     esac
