@@ -64,7 +64,9 @@ else
   echo '{}' > secrets/fcm.json
   log "no fcm credentials in SSM → placeholder {}"
 fi
-chmod 600 secrets/fcm.json
+# 컨테이너는 non-root(app)로 실행되고 이 파일을 직접 read-only 마운트해 읽으므로 644 필요.
+# (.env/app.env는 docker 데몬이 읽어 주입하므로 600 유지)
+chmod 644 secrets/fcm.json
 
 ### 3. ECR 로그인 & pull -----------------------------------------------------
 log "ecr login: ${ECR_REGISTRY}"
