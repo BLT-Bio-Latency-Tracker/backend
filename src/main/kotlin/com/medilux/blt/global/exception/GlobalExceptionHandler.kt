@@ -1,6 +1,7 @@
 package com.medilux.blt.global.exception
 
 import jakarta.validation.ConstraintViolationException
+import org.slf4j.LoggerFactory
 import org.springframework.http.HttpStatus
 import org.springframework.http.ProblemDetail
 import org.springframework.http.ResponseEntity
@@ -15,6 +16,8 @@ import org.springframework.web.servlet.resource.NoResourceFoundException
 
 @RestControllerAdvice
 class GlobalExceptionHandler {
+    private val log = LoggerFactory.getLogger(javaClass)
+
     @ExceptionHandler(BltException::class)
     fun handleBltException(ex: BltException): ResponseEntity<ProblemDetail> = buildProblemDetail(
         status = ex.errorCode.status,
@@ -77,11 +80,16 @@ class GlobalExceptionHandler {
     )
 
     @ExceptionHandler(Exception::class)
-    fun handleException(ex: Exception): ResponseEntity<ProblemDetail> = buildProblemDetail(
-        status = ErrorCode.INTERNAL_SERVER_ERROR.status,
-        detail = ErrorCode.INTERNAL_SERVER_ERROR.message,
-        errorCode = ErrorCode.INTERNAL_SERVER_ERROR.code,
-    )
+    fun handleException(ex: Exception): ResponseEntity<ProblemDetail> {
+        // 예상 못 한 5xx만 ERROR 로깅 → 컨테이너 로그 기록 + Sentry(Logback 통합)로 전송.
+        // (4xx 비즈니스 예외는 정상 응답이라 Sentry로 보내지 않음)
+        log.error("Unhandled exception", ex)
+        return buildProblemDetail(
+            status = ErrorCode.INTERNAL_SERVER_ERROR.status,
+            detail = ErrorCode.INTERNAL_SERVER_ERROR.message,
+            errorCode = ErrorCode.INTERNAL_SERVER_ERROR.code,
+        )
+    }
 
     private fun buildProblemDetail(status: HttpStatus, detail: String, errorCode: String): ResponseEntity<ProblemDetail> {
         val problemDetail = ProblemDetail.forStatusAndDetail(status, detail)

@@ -13,10 +13,11 @@ spring:
         format_sql: false
 
 springdoc:
+  # SSM /blt/prod/swagger-enabled 로 제어(기본 false).
   api-docs:
-    enabled: false
+    enabled: ${SWAGGER_ENABLED:false}
   swagger-ui:
-    enabled: false
+    enabled: ${SWAGGER_ENABLED:false}
 
 logging:
   level:
