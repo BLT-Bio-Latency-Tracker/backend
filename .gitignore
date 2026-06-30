@@ -46,6 +46,10 @@ app.env
 /secrets/
 *.p8
 
+### local-only tooling (커밋 금지) ###
+src/test/kotlin/com/medilux/blt/tooling/
+build/access-token.txt
+
 ### macOS ###
 .DS_Store
 
