@@ -118,6 +118,9 @@ class AuthService(
             throw BltException(ErrorCode.AUTH_INVALID_CREDENTIALS)
         }
 
+        val user = userRepository.findById(userId)
+            .orElseThrow { BltException(ErrorCode.AUTH_INVALID_CREDENTIALS) }
+
         val revokedCount = refreshTokenRepository.revokeActiveToken(
             tokenHash = tokenHash,
             revokedAt = Instant.now(),
@@ -125,9 +128,6 @@ class AuthService(
         if (revokedCount != 1) {
             throw BltException(ErrorCode.AUTH_INVALID_CREDENTIALS)
         }
-
-        val user = userRepository.findById(userId)
-            .orElseThrow { BltException(ErrorCode.AUTH_INVALID_CREDENTIALS) }
 
         return createSession(user)
     }
