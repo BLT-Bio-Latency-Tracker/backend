@@ -1,5 +1,6 @@
 package com.medilux.blt.global.exception
 
+import io.sentry.Sentry
 import jakarta.validation.ConstraintViolationException
 import org.slf4j.LoggerFactory
 import org.springframework.http.HttpStatus
@@ -81,9 +82,9 @@ class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception::class)
     fun handleException(ex: Exception): ResponseEntity<ProblemDetail> {
-        // 예상 못 한 5xx만 ERROR 로깅 → 컨테이너 로그 기록 + Sentry(Logback 통합)로 전송.
-        // (4xx 비즈니스 예외는 정상 응답이라 Sentry로 보내지 않음)
+        // 4xx 비즈니스 예외는 Sentry로 보내지 않음
         log.error("Unhandled exception", ex)
+        Sentry.captureException(ex)
         return buildProblemDetail(
             status = ErrorCode.INTERNAL_SERVER_ERROR.status,
             detail = ErrorCode.INTERNAL_SERVER_ERROR.message,
