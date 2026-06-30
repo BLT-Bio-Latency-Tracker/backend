@@ -126,7 +126,10 @@ class AuthService(
             throw BltException(ErrorCode.AUTH_INVALID_CREDENTIALS)
         }
 
-        return createSession(savedRefreshToken.user)
+        val user = userRepository.findById(userId)
+            .orElseThrow { BltException(ErrorCode.AUTH_INVALID_CREDENTIALS) }
+
+        return createSession(user)
     }
 
     @Transactional
