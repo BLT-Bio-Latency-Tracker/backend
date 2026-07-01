@@ -30,7 +30,7 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-actuator")
     implementation("io.sentry:sentry-spring-boot-starter-jakarta:8.16.0")
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
-    implementation("com.auth0:java-jwt:4.4.0")
+    implementation("com.auth0:java-jwt:4.5.2")
     implementation("com.auth0:jwks-rsa:0.22.1")
     implementation("io.hypersistence:hypersistence-utils-hibernate-63:3.9.11")
     implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.16")
