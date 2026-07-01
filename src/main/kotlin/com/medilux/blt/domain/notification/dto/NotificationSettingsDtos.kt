@@ -2,7 +2,10 @@ package com.medilux.blt.domain.notification.dto
 
 import com.medilux.blt.domain.user.entity.User
 import io.swagger.v3.oas.annotations.media.Schema
+import jakarta.validation.constraints.Size
 import java.time.LocalTime
+
+private const val CUSTOM_OPTIONS_MAX = 50
 
 @Schema(description = "알림 설정 응답")
 data class NotificationSettingsResponse(
@@ -34,5 +37,6 @@ data class NotificationSettingsUpdateRequest(
     val pvtReminderTime: LocalTime? = null,
     val sleepReminderTime: LocalTime? = null,
     val notificationTimezone: String? = null,
+    @field:Size(max = CUSTOM_OPTIONS_MAX)
     val customNotificationOptions: Map<String, Any>? = null,
 )
