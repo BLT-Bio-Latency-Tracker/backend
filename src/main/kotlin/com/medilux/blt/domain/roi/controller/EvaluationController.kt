@@ -11,6 +11,7 @@ import com.medilux.blt.global.exception.BltException
 import com.medilux.blt.global.exception.ErrorCode
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.tags.Tag
+import jakarta.validation.Valid
 import org.springframework.format.annotation.DateTimeFormat
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
@@ -32,8 +33,10 @@ class EvaluationController(private val evaluationService: EvaluationService) {
     @Operation(summary = "ROI 평가 제출 (점수 계산 + 추천 반환)")
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    fun submit(@AuthenticationPrincipal principal: AuthUserPrincipal?, @RequestBody request: EvaluationCreateRequest): EvaluationResponse =
-        evaluationService.submit(requireUserId(principal), request)
+    fun submit(
+        @AuthenticationPrincipal principal: AuthUserPrincipal?,
+        @Valid @RequestBody request: EvaluationCreateRequest,
+    ): EvaluationResponse = evaluationService.submit(requireUserId(principal), request)
 
     @Operation(summary = "오늘의 평가 조회")
     @GetMapping("/today")

@@ -2,7 +2,15 @@ package com.medilux.blt.domain.auth.dto
 
 import com.medilux.blt.domain.user.entity.ConsentType
 import io.swagger.v3.oas.annotations.media.Schema
+import jakarta.validation.Valid
+import jakarta.validation.constraints.NotBlank
+import jakarta.validation.constraints.NotEmpty
 import jakarta.validation.constraints.Size
+
+private const val TOKEN_MAX = 4096
+private const val POLICY_VERSION_MAX = 20
+private const val CONSENTS_MAX = 20
+private const val CONSENT_OPTIONS_MAX = 20
 
 @Schema(description = "Apple identityToken 검증 요청")
 data class AppleVerifyRequest(
@@ -10,6 +18,8 @@ data class AppleVerifyRequest(
         description = "iOS Apple Sign-In 성공 후 받은 identityToken JWT",
         requiredMode = Schema.RequiredMode.REQUIRED,
     )
+    @field:NotBlank
+    @field:Size(max = TOKEN_MAX)
     val identityToken: String,
 )
 
@@ -19,8 +29,13 @@ data class AppleSignupRequest(
         description = "Apple verify API가 신규 사용자에게 발급한 5분짜리 임시 가입 토큰",
         requiredMode = Schema.RequiredMode.REQUIRED,
     )
+    @field:NotBlank
+    @field:Size(max = TOKEN_MAX)
     val verificationToken: String,
     @field:Schema(description = "사용자가 확인한 전체 약관 동의/비동의 목록", requiredMode = Schema.RequiredMode.REQUIRED)
+    @field:Valid
+    @field:NotEmpty
+    @field:Size(max = CONSENTS_MAX)
     val consents: List<ConsentRequest>,
     @field:Schema(
         description = "Apple 로그인 제공 사용자 이름을 기본 닉네임으로 저장 (선택). 미제공(null/공백) 시 서버가 랜덤 닉네임을 부여.",
@@ -33,12 +48,16 @@ data class AppleSignupRequest(
 @Schema(description = "토큰 갱신 요청")
 data class RefreshTokenRequest(
     @field:Schema(description = "로그인 또는 가입 시 발급받은 refresh token", requiredMode = Schema.RequiredMode.REQUIRED)
+    @field:NotBlank
+    @field:Size(max = TOKEN_MAX)
     val refreshToken: String,
 )
 
 @Schema(description = "로그아웃 요청")
 data class LogoutRequest(
     @field:Schema(description = "로그인 또는 가입 시 발급받은 refresh token", requiredMode = Schema.RequiredMode.REQUIRED)
+    @field:NotBlank
+    @field:Size(max = TOKEN_MAX)
     val refreshToken: String,
 )
 
@@ -51,10 +70,13 @@ data class ConsentRequest(
     )
     val consentType: ConsentType,
     @field:Schema(description = "약관 버전", example = "1.0", requiredMode = Schema.RequiredMode.REQUIRED)
+    @field:NotBlank
+    @field:Size(max = POLICY_VERSION_MAX)
     val policyVersion: String,
     @field:Schema(description = "사용자 동의 여부. 필수 약관은 true여야 가입 가능.", example = "true", requiredMode = Schema.RequiredMode.REQUIRED)
     val agreed: Boolean,
     @field:Schema(description = "약관별 하위 옵션. MVP에서는 선택 입력값입니다.", example = """{"push":false}""")
+    @field:Size(max = CONSENT_OPTIONS_MAX)
     val options: Map<String, Any>? = null,
 )
 

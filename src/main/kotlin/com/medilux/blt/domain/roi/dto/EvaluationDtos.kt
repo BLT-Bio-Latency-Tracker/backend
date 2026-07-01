@@ -8,10 +8,18 @@ import com.medilux.blt.domain.roi.entity.RoiQuadrant
 import com.medilux.blt.domain.sleep.entity.SleepDataCompleteness
 import com.medilux.blt.domain.sleep.entity.SleepRecord
 import io.swagger.v3.oas.annotations.media.Schema
+import jakarta.validation.Valid
+import jakarta.validation.constraints.NotBlank
+import jakarta.validation.constraints.Size
 import java.time.Instant
 import java.time.LocalDate
 import java.util.UUID
 import kotlin.math.roundToInt
+
+// PVT 시행/반응시간 배열 상한 (초과 시 400).
+private const val PVT_SAMPLES_MAX = 2000
+private const val TIMEZONE_MAX = 64
+private const val INVALID_REASON_MAX = 50
 
 // ---------------------------------------------------------------------------
 // Request
@@ -22,10 +30,14 @@ data class EvaluationCreateRequest(
     @field:Schema(description = "측정/평가 시각", example = "2026-05-30T09:43:00Z")
     val evaluatedAt: Instant,
     @field:Schema(description = "타임존 (수면 귀속일·today 판정)", example = "Asia/Seoul")
+    @field:NotBlank
+    @field:Size(max = TIMEZONE_MAX)
     val timezone: String,
     @field:Schema(description = "수면/HRV 데이터. 없으면 PVT_ONLY")
+    @field:Valid
     val healthKitData: HealthKitDataRequest? = null,
     @field:Schema(description = "PVT 측정 결과")
+    @field:Valid
     val pvt: PvtRequest,
 )
 
@@ -53,6 +65,7 @@ data class PvtRequest(
     val endedAt: Instant,
     val totalDurationMs: Int,
     val totalCount: Int,
+    @field:Size(max = PVT_SAMPLES_MAX)
     val rawRtMs: List<Int>,
     val avgRtMs: Double,
     val medianRtMs: Double? = null,
@@ -60,7 +73,9 @@ data class PvtRequest(
     val lapsesTimeout: Int,
     val falseStarts: Int,
     val isValid: Boolean,
+    @field:Size(max = INVALID_REASON_MAX)
     val invalidReason: String? = null,
+    @field:Size(max = PVT_SAMPLES_MAX)
     val trials: List<Map<String, Any?>> = emptyList(),
 )
 

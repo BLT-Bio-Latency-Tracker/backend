@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.DateTimeException
 import java.time.ZoneId
+import java.time.temporal.ChronoUnit
 
 @Service
 class NotificationSettingsService(private val userRepository: UserRepository) {
@@ -25,8 +26,8 @@ class NotificationSettingsService(private val userRepository: UserRepository) {
             .orElseThrow { BltException(ErrorCode.USER_NOT_FOUND) }
 
         request.notificationEnabled?.let { user.notificationEnabled = it }
-        request.pvtReminderTime?.let { user.pvtReminderTime = it }
-        request.sleepReminderTime?.let { user.sleepReminderTime = it }
+        request.pvtReminderTime?.let { user.pvtReminderTime = it.truncatedTo(ChronoUnit.MINUTES) }
+        request.sleepReminderTime?.let { user.sleepReminderTime = it.truncatedTo(ChronoUnit.MINUTES) }
         request.notificationTimezone?.let { zone ->
             user.notificationTimezone = validateZone(zone)
         }

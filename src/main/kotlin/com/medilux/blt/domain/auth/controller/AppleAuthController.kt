@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.RestController
 class AppleAuthController(private val authService: AuthService) {
     @Operation(summary = "Apple identityToken 검증")
     @PostMapping("/verify")
-    fun verify(@RequestBody request: AppleVerifyRequest): AppleAuthResponse = authService.verifyApple(request)
+    fun verify(@Valid @RequestBody request: AppleVerifyRequest): AppleAuthResponse = authService.verifyApple(request)
 
     @Operation(summary = "Apple 신규 사용자 약관 동의 후 가입")
     @PostMapping("/signup")

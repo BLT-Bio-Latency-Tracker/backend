@@ -33,7 +33,7 @@ class UserController(private val userService: UserService) {
     @PatchMapping("/me/onboarding")
     fun completeOnboarding(
         @AuthenticationPrincipal principal: AuthUserPrincipal?,
-        @RequestBody request: OnboardingRequest,
+        @Valid @RequestBody request: OnboardingRequest,
     ): OnboardingResponse = userService.completeOnboarding(principal, request)
 
     @Operation(summary = "내 정보 수정")
