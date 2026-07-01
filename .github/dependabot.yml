@@ -1,0 +1,30 @@
+# 의존성 취약점(CVE) 자동 감시 — Gradle 라이브러리 + GitHub Actions.
+# 매주 업데이트 PR 생성 → CI(build/test) 통과 후에만 머지.
+version: 2
+updates:
+  - package-ecosystem: gradle
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
+      time: "09:00"
+      timezone: Asia/Seoul
+    open-pull-requests-limit: 10
+    labels:
+      - dependencies
+    commit-message:
+      prefix: "⬆️deps"
+
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
+      time: "09:00"
+      timezone: Asia/Seoul
+    open-pull-requests-limit: 5
+    labels:
+      - dependencies
+      - ci
+    commit-message:
+      prefix: "⬆️ci"
