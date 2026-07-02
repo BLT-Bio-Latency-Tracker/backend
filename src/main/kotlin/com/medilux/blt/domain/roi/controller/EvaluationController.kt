@@ -16,6 +16,7 @@ import org.springframework.format.annotation.DateTimeFormat
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.annotation.AuthenticationPrincipal
+import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
@@ -68,6 +69,12 @@ class EvaluationController(private val evaluationService: EvaluationService) {
     @GetMapping("/{id}")
     fun getDetail(@AuthenticationPrincipal principal: AuthUserPrincipal?, @PathVariable id: Long): EvaluationDetailResponse =
         evaluationService.getDetail(requireUserId(principal), id)
+
+    @Operation(summary = "평가 삭제")
+    @DeleteMapping("/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    fun delete(@AuthenticationPrincipal principal: AuthUserPrincipal?, @PathVariable id: Long) =
+        evaluationService.delete(requireUserId(principal), id)
 
     private fun requireUserId(principal: AuthUserPrincipal?): Long =
         principal?.userId ?: throw BltException(ErrorCode.AUTH_INVALID_CREDENTIALS)

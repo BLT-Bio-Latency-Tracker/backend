@@ -266,6 +266,59 @@ class EvaluationServiceIntegrationTest {
         assertThat(week.measuredDays).isEqualTo(1) // 20일 전 측정은 최근 7일 범위 밖
     }
 
+    @Test
+    fun `delete soft-deletes score, session, recommendations and excludes from all reads`() {
+        val user = persistUser()
+        val created = evaluationService.submit(user.id, request())
+        val id = created.evaluationId
+
+        evaluationService.delete(user.id, id)
+        entityManager.flush()
+        entityManager.clear()
+
+        // 상세 조회는 404, 오늘/목록/통계·추천에서 자동 제외(@SQLRestriction)
+        assertThatThrownBy { evaluationService.getDetail(user.id, id) }.isInstanceOf(BltException::class.java)
+        assertThat(evaluationService.getToday(user.id)).isNull()
+        assertThat(evaluationService.list(user.id, null, null, null, 10).items).isEmpty()
+        assertThat(evaluationService.stats(user.id, "month", null, null).measuredDays).isEqualTo(0)
+        assertThat(recommendationRepository.findByRoiScoreIdOrderByIdAsc(id)).isEmpty()
+    }
+
+    @Test
+    fun `delete rejects non-owned evaluation and is not repeatable`() {
+        val user = persistUser()
+        val other = persistUser("other-hash")
+        val created = evaluationService.submit(user.id, request())
+
+        // 타 유저는 삭제 불가(404)
+        assertThatThrownBy { evaluationService.delete(other.id, created.evaluationId) }
+            .isInstanceOf(BltException::class.java)
+
+        // 정상 삭제 후 재삭제는 404(이미 제외됨)
+        evaluationService.delete(user.id, created.evaluationId)
+        entityManager.flush()
+        entityManager.clear()
+        assertThatThrownBy { evaluationService.delete(user.id, created.evaluationId) }
+            .isInstanceOf(BltException::class.java)
+    }
+
+    @Test
+    fun `delete keeps shared sleep record and sibling same-day evaluation`() {
+        val user = persistUser()
+        val today = LocalDate.now()
+        val first = evaluationService.submit(user.id, request())
+        val second = evaluationService.submit(user.id, request(evaluatedAt = Instant.now().plusSeconds(1)))
+
+        evaluationService.delete(user.id, first.evaluationId)
+        entityManager.flush()
+        entityManager.clear()
+
+        // 같은 날 다른 평가는 보존, 하루 공유 SleepRecord도 보존
+        assertThat(evaluationService.getDetail(user.id, second.evaluationId).evaluation.evaluationId)
+            .isEqualTo(second.evaluationId)
+        assertThat(sleepRecordRepository.findFirstByUserIdAndSleepDateOrderByIdDesc(user.id, today)).isNotNull
+    }
+
     companion object {
         @Container
         @ServiceConnection

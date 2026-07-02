@@ -120,6 +120,21 @@ class EvaluationService(
         return EvaluationResponse.from(score, recommendationsOf(score), trendOf(score))
     }
 
+    /**
+     * SleepRecord는 하루 단위로 공유되므로 삭제하지 않는다.
+     * soft-delete라 @SQLRestriction이 이후 오늘/목록/통계/트렌드 조회에서 자동 제외.
+     */
+    @Transactional
+    fun delete(userId: Long, evaluationId: Long) {
+        val score = brainRoiScoreRepository.findByIdAndUserId(evaluationId, userId)
+            ?: throw BltException(ErrorCode.BRAIN_ROI_NOT_FOUND)
+
+        val now = Instant.now()
+        score.delete(now)
+        score.session.delete(now)
+        recommendationRepository.softDeleteByRoiScoreId(evaluationId, now)
+    }
+
     /** 상세 — 수면·PVT 카드 지표 전개. */
     @Transactional(readOnly = true)
     fun getDetail(userId: Long, evaluationId: Long): EvaluationDetailResponse {
