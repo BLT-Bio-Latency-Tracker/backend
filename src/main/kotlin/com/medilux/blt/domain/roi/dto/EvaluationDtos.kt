@@ -7,6 +7,8 @@ import com.medilux.blt.domain.roi.entity.Recommendation
 import com.medilux.blt.domain.roi.entity.RoiQuadrant
 import com.medilux.blt.domain.sleep.entity.SleepDataCompleteness
 import com.medilux.blt.domain.sleep.entity.SleepRecord
+import com.medilux.blt.domain.sleep.entity.SleepStage
+import com.medilux.blt.domain.sleep.entity.SleepStageSegment
 import io.swagger.v3.oas.annotations.media.Schema
 import jakarta.validation.Valid
 import jakarta.validation.constraints.NotBlank
@@ -20,6 +22,7 @@ import kotlin.math.roundToInt
 private const val PVT_SAMPLES_MAX = 2000
 private const val TIMEZONE_MAX = 64
 private const val INVALID_REASON_MAX = 50
+private const val SLEEP_STAGES_MAX = 2000
 
 // ---------------------------------------------------------------------------
 // Request
@@ -56,6 +59,20 @@ data class HealthKitDataRequest(
     val weeklyHrvBaselineMs: Double? = null,
     val dataCompleteness: SleepDataCompleteness? = null,
     val rawPayload: Map<String, Any?>? = null,
+    @field:Schema(description = "수면 단계 구간 타임라인(선택). 상세 화면의 시간대별 표시용.")
+    @field:Valid
+    @field:Size(max = SLEEP_STAGES_MAX)
+    val stages: List<SleepStageSegmentRequest>? = null,
+)
+
+@Schema(description = "수면 단계 한 구간 (시작~종료, UTC)")
+data class SleepStageSegmentRequest(
+    @field:Schema(description = "수면 단계", example = "REM")
+    val stage: SleepStage,
+    @field:Schema(description = "구간 시작 시각(UTC)", example = "2026-05-30T02:13:00Z")
+    val startAt: Instant,
+    @field:Schema(description = "구간 종료 시각(UTC)", example = "2026-05-30T02:41:00Z")
+    val endAt: Instant,
 )
 
 @Schema(description = "PVT 측정 결과 (= PvtSession)")
@@ -183,6 +200,8 @@ data class SleepDetail(
     val remRatioPercent: Int?,
     val lightRatioPercent: Int?,
     val dataCompleteness: SleepDataCompleteness?,
+    @field:Schema(description = "수면 단계 구간 타임라인(시작~종료, UTC). 없으면 빈 배열.")
+    val stages: List<SleepStageSegmentResponse> = emptyList(),
 ) {
     companion object {
         fun from(s: SleepRecord): SleepDetail {
@@ -209,8 +228,17 @@ data class SleepDetail(
                 remRatioPercent = ratio(s.remMinutes),
                 lightRatioPercent = ratio(s.coreMinutes),
                 dataCompleteness = s.dataCompleteness,
+                stages = s.stages.orEmpty().map(SleepStageSegmentResponse::from),
             )
         }
+    }
+}
+
+@Schema(description = "수면 단계 한 구간 (시작~종료, UTC)")
+data class SleepStageSegmentResponse(val stage: SleepStage, val startAt: Instant, val endAt: Instant) {
+    companion object {
+        fun from(segment: SleepStageSegment): SleepStageSegmentResponse =
+            SleepStageSegmentResponse(stage = segment.stage, startAt = segment.startAt, endAt = segment.endAt)
     }
 }
 

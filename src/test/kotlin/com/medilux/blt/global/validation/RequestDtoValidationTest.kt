@@ -4,7 +4,10 @@ import com.medilux.blt.domain.auth.dto.AppleVerifyRequest
 import com.medilux.blt.domain.notification.dto.DeviceRegisterRequest
 import com.medilux.blt.domain.notification.dto.NotificationSettingsUpdateRequest
 import com.medilux.blt.domain.roi.dto.EvaluationCreateRequest
+import com.medilux.blt.domain.roi.dto.HealthKitDataRequest
 import com.medilux.blt.domain.roi.dto.PvtRequest
+import com.medilux.blt.domain.roi.dto.SleepStageSegmentRequest
+import com.medilux.blt.domain.sleep.entity.SleepStage
 import jakarta.validation.Validation
 import jakarta.validation.Validator
 import org.junit.jupiter.api.AfterAll
@@ -70,6 +73,15 @@ class RequestDtoValidationTest {
             pvt = validPvt(),
         )
         assertTrue(violates(request, "timezone"))
+    }
+
+    @Test
+    fun `healthKit sleep stages over max size is rejected`() {
+        val many = List(2001) {
+            SleepStageSegmentRequest(SleepStage.CORE, Instant.parse("2026-05-30T00:00:00Z"), Instant.parse("2026-05-30T00:30:00Z"))
+        }
+        val hk = HealthKitDataRequest(sleepDate = java.time.LocalDate.parse("2026-05-30"), totalMinutes = 400, stages = many)
+        assertTrue(violates(hk, "stages"))
     }
 
     @Test

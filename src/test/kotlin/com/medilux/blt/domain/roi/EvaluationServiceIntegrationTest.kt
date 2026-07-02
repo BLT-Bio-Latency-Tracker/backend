@@ -3,6 +3,7 @@ package com.medilux.blt.domain.roi
 import com.medilux.blt.domain.roi.dto.EvaluationCreateRequest
 import com.medilux.blt.domain.roi.dto.HealthKitDataRequest
 import com.medilux.blt.domain.roi.dto.PvtRequest
+import com.medilux.blt.domain.roi.dto.SleepStageSegmentRequest
 import com.medilux.blt.domain.roi.entity.CalculationScenario
 import com.medilux.blt.domain.roi.repository.BrainRoiScoreRepository
 import com.medilux.blt.domain.roi.repository.RecommendationRepository
@@ -11,6 +12,7 @@ import com.medilux.blt.domain.roi.service.EvaluationService
 import com.medilux.blt.domain.roi.service.PvtScoreCalculator
 import com.medilux.blt.domain.roi.service.RuleBasedRecommendationProvider
 import com.medilux.blt.domain.roi.service.SleepScoreCalculator
+import com.medilux.blt.domain.sleep.entity.SleepStage
 import com.medilux.blt.domain.sleep.repository.SleepRecordRepository
 import com.medilux.blt.domain.user.entity.AuthType
 import com.medilux.blt.domain.user.entity.User
@@ -317,6 +319,58 @@ class EvaluationServiceIntegrationTest {
         assertThat(evaluationService.getDetail(user.id, second.evaluationId).evaluation.evaluationId)
             .isEqualTo(second.evaluationId)
         assertThat(sleepRecordRepository.findFirstByUserIdAndSleepDateOrderByIdDesc(user.id, today)).isNotNull
+    }
+
+    @Test
+    fun `submit persists sleep stage segments and detail returns them (jsonb round-trip)`() {
+        val user = persistUser()
+        val stages = listOf(
+            SleepStageSegmentRequest(SleepStage.REM, Instant.parse("2026-05-30T02:13:00Z"), Instant.parse("2026-05-30T02:41:00Z")),
+            SleepStageSegmentRequest(SleepStage.DEEP, Instant.parse("2026-05-30T02:41:00Z"), Instant.parse("2026-05-30T03:10:00Z")),
+        )
+
+        val created = evaluationService.submit(user.id, request(healthKitData = healthKit().copy(stages = stages)))
+        entityManager.flush()
+        entityManager.clear()
+
+        val detail = evaluationService.getDetail(user.id, created.evaluationId)
+        assertThat(detail.sleep).isNotNull
+        assertThat(detail.sleep!!.stages).hasSize(2)
+        assertThat(detail.sleep!!.stages.first().stage).isEqualTo(SleepStage.REM)
+        assertThat(detail.sleep!!.stages.first().startAt).isEqualTo(Instant.parse("2026-05-30T02:13:00Z"))
+        assertThat(detail.sleep!!.stages.last().endAt).isEqualTo(Instant.parse("2026-05-30T03:10:00Z"))
+    }
+
+    @Test
+    fun `re-measuring same day overwrites sleep stage segments`() {
+        val user = persistUser()
+        val firstStages = listOf(
+            SleepStageSegmentRequest(SleepStage.CORE, Instant.parse("2026-05-30T00:00:00Z"), Instant.parse("2026-05-30T01:00:00Z")),
+        )
+        val secondStages = listOf(
+            SleepStageSegmentRequest(SleepStage.DEEP, Instant.parse("2026-05-30T01:00:00Z"), Instant.parse("2026-05-30T02:00:00Z")),
+            SleepStageSegmentRequest(SleepStage.REM, Instant.parse("2026-05-30T02:00:00Z"), Instant.parse("2026-05-30T02:30:00Z")),
+        )
+
+        evaluationService.submit(user.id, request(healthKitData = healthKit().copy(stages = firstStages)))
+        val second = evaluationService.submit(
+            user.id,
+            request(evaluatedAt = Instant.now().plusSeconds(1), healthKitData = healthKit().copy(stages = secondStages)),
+        )
+        entityManager.flush()
+        entityManager.clear()
+
+        val detail = evaluationService.getDetail(user.id, second.evaluationId)
+        assertThat(detail.sleep!!.stages).hasSize(2)
+        assertThat(detail.sleep!!.stages.first().stage).isEqualTo(SleepStage.DEEP)
+    }
+
+    @Test
+    fun `submit without stages returns empty stage list`() {
+        val user = persistUser()
+        val created = evaluationService.submit(user.id, request())
+        val detail = evaluationService.getDetail(user.id, created.evaluationId)
+        assertThat(detail.sleep!!.stages).isEmpty()
     }
 
     companion object {

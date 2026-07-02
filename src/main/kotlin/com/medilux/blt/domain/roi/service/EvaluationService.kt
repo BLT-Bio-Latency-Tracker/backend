@@ -9,11 +9,13 @@ import com.medilux.blt.domain.roi.dto.EvaluationResponse
 import com.medilux.blt.domain.roi.dto.EvaluationStatsResponse
 import com.medilux.blt.domain.roi.dto.EvaluationSummaryResponse
 import com.medilux.blt.domain.roi.dto.HealthKitDataRequest
+import com.medilux.blt.domain.roi.dto.SleepStageSegmentRequest
 import com.medilux.blt.domain.roi.entity.BrainRoiScore
 import com.medilux.blt.domain.roi.entity.Recommendation
 import com.medilux.blt.domain.roi.repository.BrainRoiScoreRepository
 import com.medilux.blt.domain.roi.repository.RecommendationRepository
 import com.medilux.blt.domain.sleep.entity.SleepRecord
+import com.medilux.blt.domain.sleep.entity.SleepStageSegment
 import com.medilux.blt.domain.sleep.repository.SleepRecordRepository
 import com.medilux.blt.domain.user.entity.User
 import com.medilux.blt.domain.user.repository.UserRepository
@@ -309,7 +311,11 @@ class EvaluationService(
         weeklyHrvBaselineMs = weeklyHrvBaselineMs,
         dataCompleteness = dataCompleteness,
         rawPayload = rawPayload,
+        stages = stages?.toSegments(),
     )
+
+    private fun List<SleepStageSegmentRequest>.toSegments(): List<SleepStageSegment> =
+        map { SleepStageSegment(stage = it.stage, startAt = it.startAt, endAt = it.endAt) }
 
     private fun SleepRecord.applyHealthKit(hk: HealthKitDataRequest) {
         totalMinutes = hk.totalMinutes
@@ -324,6 +330,7 @@ class EvaluationService(
         weeklyHrvBaselineMs = hk.weeklyHrvBaselineMs
         dataCompleteness = hk.dataCompleteness
         if (hk.rawPayload != null) rawPayload = hk.rawPayload
+        if (hk.stages != null) stages = hk.stages.toSegments()
     }
 
     private fun SleepRecord.toScoreInput(baseline: SleepPersonalBaseline?): SleepScoreInput = SleepScoreInput(

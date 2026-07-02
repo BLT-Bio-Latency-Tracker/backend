@@ -19,6 +19,7 @@ import jakarta.persistence.Table
 import org.hibernate.annotations.JdbcTypeCode
 import org.hibernate.annotations.SQLRestriction
 import org.hibernate.type.SqlTypes
+import java.time.Instant
 import java.time.LocalDate
 
 @Entity
@@ -62,6 +63,10 @@ class SleepRecord(
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "raw_payload", columnDefinition = "jsonb")
     var rawPayload: Map<String, Any?>? = null,
+    /** 수면 단계 타임라인(구간별 시작~종료). 상세 화면의 "몇 시~몇 시 REM/깊은수면" 표시용. */
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "stages", columnDefinition = "jsonb")
+    var stages: List<SleepStageSegment>? = null,
 ) : BaseEntity() {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -73,3 +78,15 @@ enum class SleepDataCompleteness {
     PARTIAL_STAGES,
     TOTAL_ONLY,
 }
+
+enum class SleepStage {
+    DEEP,
+    REM,
+    CORE,
+    AWAKE,
+    IN_BED,
+    UNSPECIFIED,
+}
+
+/** 수면 단계 한 구간(UTC 시각). JSONB로 저장/반환된다. */
+data class SleepStageSegment(val stage: SleepStage, val startAt: Instant, val endAt: Instant)
