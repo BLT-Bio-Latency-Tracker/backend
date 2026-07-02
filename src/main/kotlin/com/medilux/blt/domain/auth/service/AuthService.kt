@@ -9,6 +9,8 @@ import com.medilux.blt.domain.auth.dto.RefreshTokenRequest
 import com.medilux.blt.domain.auth.entity.RefreshToken
 import com.medilux.blt.domain.auth.repository.RefreshTokenRepository
 import com.medilux.blt.domain.auth.security.AppleIdTokenVerifier
+import com.medilux.blt.domain.auth.security.AppleTokenCipher
+import com.medilux.blt.domain.auth.security.AppleTokenClient
 import com.medilux.blt.domain.auth.security.AuthUserPrincipal
 import com.medilux.blt.domain.auth.security.JwtTokenProvider
 import com.medilux.blt.domain.user.entity.AuthType
@@ -36,6 +38,8 @@ class AuthService(
     private val consentLogRepository: ConsentLogRepository,
     private val refreshTokenRepository: RefreshTokenRepository,
     private val userWithdrawalCleanupService: UserWithdrawalCleanupService,
+    private val appleTokenClient: AppleTokenClient,
+    private val appleTokenCipher: AppleTokenCipher,
 ) {
     @Transactional
     fun verifyApple(request: AppleVerifyRequest): AppleAuthResponse {
@@ -49,6 +53,7 @@ class AuthService(
 
         if (user != null) {
             if (user.status != UserStatus.WITHDRAW_PENDING) {
+                storeAppleRefreshTokenIfPresent(user, request.authorizationCode)
                 return AppleAuthResponse.existing(createSession(user))
             }
 
@@ -99,8 +104,19 @@ class AuthService(
         }
 
         consentLogRepository.saveAll(consentLogs)
+        storeAppleRefreshTokenIfPresent(user, request.authorizationCode)
 
         return createSession(user)
+    }
+
+    /**
+     * authorizationCode가 있으면 Apple에서 refresh token으로 교환해 암호화하여 저장한다(계정 삭제 시 폐기용).
+     */
+    private fun storeAppleRefreshTokenIfPresent(user: User, authorizationCode: String?) {
+        val code = authorizationCode?.trim()?.takeIf(String::isNotBlank) ?: return
+        appleTokenClient.exchangeRefreshToken(code)?.let { refreshToken ->
+            user.appleRefreshToken = appleTokenCipher.encrypt(refreshToken)
+        }
     }
 
     @Transactional

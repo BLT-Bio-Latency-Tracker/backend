@@ -58,6 +58,14 @@ blt:
   apple:
     issuer: ${APPLE_ISSUER:https://appleid.apple.com}
     client-id: ${APPLE_CLIENT_ID}
+    # 계정 삭제 시 Apple 토큰 폐기(revoke).
+    revocation:
+      enabled: ${APPLE_REVOCATION_ENABLED:false}
+      team-id: ${APPLE_TEAM_ID:}
+      key-id: ${APPLE_KEY_ID:}
+      private-key: ${APPLE_PRIVATE_KEY:}
+    # refresh token 저장 암호화 키(base64 32B, AES-256-GCM)
+    token-encryption-key: ${APPLE_TOKEN_ENCRYPTION_KEY:}
   fcm:
     enabled: ${FCM_ENABLED:false}
     credentials-path: ${FCM_CREDENTIALS_PATH:}

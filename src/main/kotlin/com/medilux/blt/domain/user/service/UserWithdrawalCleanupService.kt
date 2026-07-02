@@ -88,6 +88,7 @@ class UserWithdrawalCleanupService(
         sleepRecordRepository.clearRawPayloadByUserId(userId)
 
         user.appleSubHash = withdrawnAppleSubHash(userId, now)
+        user.appleRefreshToken = null
         user.email = null
         user.nickname = null
         user.occupation = null

@@ -11,6 +11,7 @@ private const val TOKEN_MAX = 4096
 private const val POLICY_VERSION_MAX = 20
 private const val CONSENTS_MAX = 20
 private const val CONSENT_OPTIONS_MAX = 20
+private const val AUTHORIZATION_CODE_MAX = 1024
 
 @Schema(description = "Apple identityToken 검증 요청")
 data class AppleVerifyRequest(
@@ -21,6 +22,12 @@ data class AppleVerifyRequest(
     @field:NotBlank
     @field:Size(max = TOKEN_MAX)
     val identityToken: String,
+    @field:Schema(
+        description = "Apple authorizationCode (선택). 제공 시 서버가 refresh token으로 교환해 계정 삭제 시 폐기에 사용.",
+        nullable = true,
+    )
+    @field:Size(max = AUTHORIZATION_CODE_MAX)
+    val authorizationCode: String? = null,
 )
 
 @Schema(description = "Apple 신규 가입 요청")
@@ -43,6 +50,12 @@ data class AppleSignupRequest(
     )
     @field:Size(max = 50)
     val nickname: String? = null,
+    @field:Schema(
+        description = "Apple authorizationCode (선택). 제공 시 서버가 refresh token으로 교환·저장해 계정 삭제 시 폐기에 사용.",
+        nullable = true,
+    )
+    @field:Size(max = AUTHORIZATION_CODE_MAX)
+    val authorizationCode: String? = null,
 )
 
 @Schema(description = "토큰 갱신 요청")
