@@ -33,7 +33,7 @@ dependencies {
     implementation("com.auth0:java-jwt:4.5.2")
     implementation("com.auth0:jwks-rsa:0.22.1")
     implementation("io.hypersistence:hypersistence-utils-hibernate-63:3.9.11")
-    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.16")
+    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:3.0.3")
     implementation("com.google.firebase:firebase-admin:9.9.0")
     implementation("org.jetbrains.kotlin:kotlin-reflect")
     developmentOnly("org.springframework.boot:spring-boot-devtools")
