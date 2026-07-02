@@ -37,6 +37,8 @@ class User(
     var status: UserStatus = UserStatus.ACTIVE,
     @Column(name = "withdrawn_at")
     var withdrawnAt: Instant? = null,
+    @Column(name = "apple_refresh_token", columnDefinition = "text")
+    var appleRefreshToken: String? = null,
     @Enumerated(EnumType.STRING)
     @Column(name = "auth_type", nullable = false, length = 20, updatable = false)
     val authType: AuthType,
